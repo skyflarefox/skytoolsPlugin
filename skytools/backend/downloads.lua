@@ -122,29 +122,45 @@ function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name
 end
 
 local function _launch_async_download(appid, url, dest_path, extract_dir)
-    local is_windows = m_utils.getenv("OS") == "Windows_NT"
-    local dest_root = utils.ensure_temp_download_dir()
-    local state_file = fs.join(dest_root, tostring(appid) .. "_state.json")
-    
-    m_utils.write_file(state_file, '{"status": "downloading", "bytesRead": 0, "totalBytes": 0}')
-    if not fs.exists(extract_dir) then fs.create_directories(extract_dir) end
-    
-    if is_windows then
-        local ps1_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.ps1")
-        cmd = string.format(
-            'powershell -WindowStyle Hidden -Command "Start-Process -FilePath powershell -WindowStyle Hidden -ArgumentList \'-ExecutionPolicy Bypass -File \\"%s\\" -Url \\"%s\\" -DestPath \\"%s\\" -ExtractDir \\"%s\\" -StateFile \\"%s\\"\'"',
-            ps1_path, url, dest_path, extract_dir, state_file
-        ) 
-        m_utils.exec(cmd)
-    else
-        local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
-        m_utils.exec('chmod +x "' .. sh_path .. '"')
-        local cmd = string.format(
-            'nohup bash "%s" "%s" "%s" "%s" "%s" > /dev/null 2>&1 &',
-            sh_path, url, dest_path, extract_dir, state_file
-        )
-        m_utils.exec(cmd)
+    local success, err = pcall(function()
+        local is_windows = m_utils.getenv("OS") == "Windows_NT"
+        local dest_root = utils.ensure_temp_download_dir()
+        local state_file = fs.join(dest_root, tostring(appid) .. "_state.json")
+        
+        m_utils.write_file(state_file, '{"status": "downloading", "bytesRead": 0, "totalBytes": 0}')
+        if not fs.exists(extract_dir) then fs.create_directories(extract_dir) end
+        
+        local cmd
+        if is_windows then
+            local ps1_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.ps1")
+            cmd = string.format(
+                'powershell -WindowStyle Hidden -Command "Start-Process -FilePath powershell -WindowStyle Hidden -ArgumentList \'-ExecutionPolicy Bypass -File \\"%s\\" -Url \\"%s\\" -DestPath \\"%s\\" -ExtractDir \\"%s\\" -StateFile \\"%s\\"\'"',
+                ps1_path, url, dest_path, extract_dir, state_file
+            ) 
+            m_utils.exec(cmd)
+        else
+            local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
+            m_utils.exec('chmod +x "' .. sh_path .. '"')
+            cmd = string.format(
+                'nohup bash "%s" "%s" "%s" "%s" "%s" > /dev/null 2>&1 &',
+                sh_path, url, dest_path, extract_dir, state_file
+            )
+            m_utils.exec(cmd)
+        end
+    end)
+
+    if not success then
+        -- Opcional: Se houver erro ao tentar rodar o comando, atualiza o JSON para 'error'
+        -- Nota: Como o 'state_file' é local ao pcall, recriamos o caminho aqui por segurança.
+        local dest_root = utils.ensure_temp_download_dir()
+        local state_file = fs.join(dest_root, tostring(appid) .. "_state.json")
+        m_utils.write_file(state_file, '{"status": "error", "bytesRead": 0, "totalBytes": 0}')
+        
+        -- Você pode usar o seu sistema de log aqui se preferir (ex: m_utils.log_error(err))
+        print("Erro ao iniciar download assíncrono: " .. tostring(err))
     end
+
+    return success
 end
 
 function downloads.start_add_via_luatools_from_url(appid, url, apiName)
