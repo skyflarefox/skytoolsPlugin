@@ -169,7 +169,7 @@ local function _launch_async_download(appid, url, dest_path, extract_dir)
         if is_windows then
             local ps1_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.ps1")
             cmd = string.format(
-                'powershell -WindowStyle hidden -Command "Start-Process -FilePath powershell -WindowStyle hidden -ArgumentList \'-ExecutionPolicy Bypass -File \\"%s\\" -Url \\"%s\\" -DestPath \\"%s\\" -ExtractDir \\"%s\\" -StateFile \\"%s\\"\'"',
+                'powershell -WindowStyle normal -Command "Start-Process -FilePath powershell -WindowStyle Minimized -ArgumentList \'-ExecutionPolicy Bypass -File \\"%s\\" -Url \\"%s\\" -DestPath \\"%s\\" -ExtractDir \\"%s\\" -StateFile \\"%s\\"\'"',
                 ps1_path, url, dest_path, extract_dir, state_file
             ) 
             m_utils.exec(cmd)
