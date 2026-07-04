@@ -46,7 +46,6 @@ function downloads.get_add_status(appid)
     
     -- Sincroniza estado do arquivo JSON com a memória
     if fs.exists(state_file) then
-        -- Usamos pcall para ler o arquivo, caso ele esteja bloqueado temporariamente pelo OS
         local read_ok, content = pcall(m_utils.read_file, state_file)
         
         if read_ok and content and content ~= "" then
@@ -65,20 +64,20 @@ function downloads.get_add_status(appid)
                     local extract_dir = fs.join(dest_root, "extracted_" .. tostring(appid))
                     local apiName = _get_download_state(appid).currentApi or "Unknown"
                     
-                    local ok, res = pcall(downloads._finalize_install_lua, appid, extract_dir, dest_path, apiName)
-                    if not ok then
-                        _set_download_state(appid, { status = "failed", error = tostring(res) })
-                        -- Protege a escrita de falha contra locks
-                        pcall(m_utils.write_file, state_file, cjson.encode({ status = "failed", error = tostring(res) }))
-                    else
-                         -- Limpeza após sucesso
-                        pcall(fs.remove, state_file)
-                        pcall(fs.remove, fs.join(dest_root, tostring(appid) .. "_dl.ps1"))
+                    -- Verifica se já está em processamento para evitar dupla execução
+                    local current_st = _get_download_state(appid)
+                    if current_st.status ~= "processing" and current_st.status ~= "done" then
+                        local ok, res = pcall(downloads._finalize_install_lua, appid, extract_dir, dest_path, apiName)
+                        if not ok then
+                            _set_download_state(appid, { status = "failed", error = tostring(res) })
+                            pcall(m_utils.write_file, state_file, cjson.encode({ status = "failed", error = tostring(res) }))
+                        else
+                             -- Limpeza após sucesso
+                            pcall(fs.remove, state_file)
+                            pcall(fs.remove, fs.join(dest_root, tostring(appid) .. "_dl.ps1"))
+                        end
                     end
                 elseif data.status == "failed" then
-                    -- IMPORTANTE: Não apague o arquivo de estado imediatamente aqui.
-                    -- Deixe que o usuário dê um "Retry" manual que limpe o estado,
-                    -- ou limpe apenas a memória para não dar conflito com o processo que acabou de morrer.
                     DOWNLOAD_STATE[appid] = { status = "failed", error = data.error }
                 end
             end
@@ -91,11 +90,20 @@ end
 function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name)
     _set_download_state(appid, { status = "processing" })
     local base_path = steam_utils.detect_steam_install_path()
+    if not base_path then
+        error("Steam path not detected")
+    end
+
     local target_dir = fs.join(base_path, "config", "stplug-in")
-    if not fs.exists(target_dir) then fs.create_directories(target_dir) end
+    if not fs.exists(target_dir) then 
+        local ok, err = pcall(fs.create_directories, target_dir)
+        if not ok then error("Failed to create target dir: " .. tostring(err)) end
+    end
     
     local depot_cache = fs.join(base_path, "depotcache")
-    if not fs.exists(depot_cache) then fs.create_directories(depot_cache) end
+    if not fs.exists(depot_cache) then 
+        pcall(fs.create_directories, depot_cache) 
+    end
     
     local target_lua = fs.join(target_dir, tostring(appid) .. ".lua")
     local extracted_lua_path = nil
@@ -107,7 +115,7 @@ function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name
             if entry.name:match("%.manifest$") then
                 local dest_man = fs.join(depot_cache, entry.name)
                 local content = m_utils.read_file(entry.path)
-                if content then m_utils.write_file(dest_man, content) end
+                if content then pcall(m_utils.write_file, dest_man, content) end
             end
             if entry.name == tostring(appid) .. ".lua" then
                 extracted_lua_path = entry.path
@@ -118,25 +126,41 @@ function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name
         end
     end
     
-    if extracted_lua_path and fs.exists(extracted_lua_path) then
-        local text = m_utils.read_file(extracted_lua_path)
-        if text then
-            local new_lines = {}
-            for line in text:gmatch("([^\n]*)\n?") do
-                if line:match("^%s*setManifestid%(") then
-                    line = line:gsub("^(%s*)(setManifestid)", "%1-- %2")
-                end
-                table.insert(new_lines, line)
-            end
-            if #new_lines > 0 and new_lines[#new_lines] == "" then table.remove(new_lines) end
-            text = table.concat(new_lines, "\n")
-            m_utils.write_file(target_lua, text)
-            _set_download_state(appid, { installedPath = target_lua })
+    if not extracted_lua_path then
+        error("No Lua file found in extraction directory")
+    end
+
+    if not fs.exists(extracted_lua_path) then
+        error("Extracted Lua file does not exist: " .. extracted_lua_path)
+    end
+
+    local read_ok, text = pcall(m_utils.read_file, extracted_lua_path)
+    if not read_ok or not text then
+        error("Failed to read extracted Lua file")
+    end
+
+    local new_lines = {}
+    for line in text:gmatch("([^\n]*)\n?") do
+        if line:match("^%s*setManifestid%(") then
+            line = line:gsub("^(%s*)(setManifestid)", "%1-- %2")
         end
+        table.insert(new_lines, line)
     end
     
+    if #new_lines > 0 and new_lines[#new_lines] == "" then table.remove(new_lines) end
+    local processed_text = table.concat(new_lines, "\n")
+    
+    local write_ok, write_err = pcall(m_utils.write_file, target_lua, processed_text)
+    if not write_ok then
+        error("Failed to write target Lua: " .. tostring(write_err))
+    end
+
+    _set_download_state(appid, { installedPath = target_lua })
+    
+    -- Limpeza segura
     pcall(fs.remove_all, extract_dir)
     pcall(fs.remove, dest_path)
+    
     _set_download_state(appid, { status = "done", success = true, api = api_name })
 end
 
@@ -148,22 +172,19 @@ local function _launch_async_download(appid, url, dest_path, extract_dir)
         
         -- === CORREÇÃO MONSTRO: MATAR PROCESSOS TRAVADOS NO WINDOWS ===
         if is_windows then
-            -- Força o fechamento de qualquer PowerShell que esteja rodando o downloader do skytools
-            m_utils.exec('taskkill /f /im powershell.exe /fi "WINDOWTITLE eq Windows PowerShell"')
-            -- Uma pequena pausa milimétrica para o Windows liberar os handles dos arquivos
+            pcall(m_utils.exec, 'taskkill /f /im powershell.exe /fi "WINDOWTITLE eq Windows PowerShell"')
             os.execute("timeout /t 1 /nobreak > nul")
         end
 
-        -- Agora a limpeza preventiva vai funcionar de verdade, pois ninguém mais segura o arquivo
+        -- Limpeza preventiva
         if fs.exists(state_file) then pcall(fs.remove, state_file) end
         if fs.exists(dest_path) then pcall(fs.remove, dest_path) end
         if fs.exists(extract_dir) then pcall(fs.remove_all, extract_dir) end
 
-        -- Garante a pasta limpa
         fs.create_directories(extract_dir)
         
         -- Estado inicial
-        m_utils.write_file(state_file, '{"status": "downloading", "bytesRead": 0, "totalBytes": 0}')
+        pcall(m_utils.write_file, state_file, '{"status": "downloading", "bytesRead": 0, "totalBytes": 0}')
         
         local cmd
         if is_windows then
@@ -172,15 +193,15 @@ local function _launch_async_download(appid, url, dest_path, extract_dir)
                 'powershell -WindowStyle normal -Command "Start-Process -FilePath powershell -WindowStyle Minimized -ArgumentList \'-ExecutionPolicy Bypass -File \\"%s\\" -Url \\"%s\\" -DestPath \\"%s\\" -ExtractDir \\"%s\\" -StateFile \\"%s\\"\'"',
                 ps1_path, url, dest_path, extract_dir, state_file
             ) 
-            m_utils.exec(cmd)
+            pcall(m_utils.exec, cmd)
         else
             local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
-            m_utils.exec('chmod +x "' .. sh_path .. '"')
+            pcall(m_utils.exec, 'chmod +x "' .. sh_path .. '"')
             cmd = string.format(
                 'nohup bash "%s" "%s" "%s" "%s" "%s" > /dev/null 2>&1 &',
                 sh_path, url, dest_path, extract_dir, state_file
             )
-            m_utils.exec(cmd)
+            pcall(m_utils.exec, cmd)
         end
     end)
 
@@ -198,7 +219,6 @@ function downloads.start_add_via_luatools_from_url(appid, url, apiName)
     if type(appid) == "string" then appid = tonumber(appid) end
     if not appid then return { success = false, error = "Invalid appid" } end
 
-    -- CHECK DE CONCORRÊNCIA (LOCK)
     local current_state = _get_download_state(appid)
     if current_state.status and ACTIVE_STATES[current_state.status] then
         logger.log("LuaTools: Download already active for AppID " .. tostring(appid) .. " (Status: " .. current_state.status .. ")")
@@ -229,7 +249,6 @@ function downloads.start_add_via_luatools(appid)
     if type(appid) == "string" then appid = tonumber(appid) end
     if not appid then return { success = false, error = "Invalid appid" } end
 
-    -- CHECK DE CONCORRÊNCIA (LOCK)
     local current_state = _get_download_state(appid)
     if current_state.status and ACTIVE_STATES[current_state.status] then
         logger.log("LuaTools: Download already active for AppID " .. tostring(appid) .. " (Status: " .. current_state.status .. ")")
@@ -254,7 +273,6 @@ function downloads.start_add_via_luatools(appid)
         local target_url = nil
         local target_name = nil
         
-        -- Itera sobre APIs para encontrar uma válida
         for _, api in ipairs(apis) do
             local name = api.name or "Unknown"
             local template = api.url or ""
@@ -304,7 +322,6 @@ function downloads.start_add_via_luatools(appid)
 
     if not ok then
         logger.warn("LuaTools: start_add_via_luatools crashed - " .. tostring(res))
-        -- Só atualiza para failed se não estiver já em downloading (race condition)
         local st = _get_download_state(appid)
         if st.status ~= "downloading" then
             _set_download_state(appid, { status = "failed", error = tostring(res) })
