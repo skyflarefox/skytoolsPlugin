@@ -3,22 +3,13 @@ local millennium = require("millennium")
 local cjson_ok, cjson = false, nil
 local fs_ok, fs = false, nil
 
-cjson_ok, cjson = pcall(require, "json")
-if not cjson_ok then
-    cjson_ok, cjson = pcall(require, "cjson")
-end
-if not cjson_ok then
-    cjson_ok, cjson = pcall(require, "dkjson")
-end
-
-fs_ok, fs = pcall(require, "fs")
-
 local PLUGIN_ID = "skytools-plugin"
 local BROWSER_JS = "public/skytools.js"
 local BROWSER_CSS = "public/skytools.css"
 local BROWSER_JS_WEBKIT = "webkit/skytools.js"
 local BROWSER_CSS_WEBKIT = "webkit/skytools.css"
-local DEFAULT_API_ORDER = { "skyapi", "morrenus", "sushi" }
+local BROWSER_JS_ROOT = "skytools.js"
+local BROWSER_CSS_ROOT = "skytools.css"
 
 local runtime = {
     browser_js_id = 0,
@@ -195,19 +186,6 @@ local function copy_file(source, target)
     return ok
 end
 
-local function sync_file_if_different(source, target)
-    local source_data = read_file(source)
-    if source_data == nil then
-        log_error("Arquivo de origem nao encontrado: " .. tostring(source))
-        return false
-    end
-    local target_data = read_file(target)
-    if target_data == source_data then
-        return true
-    end
-    return write_file(target, source_data)
-end
-
 local function json_escape(value)
     value = tostring(value or "")
     value = value:gsub("\\", "\\\\")
@@ -282,14 +260,6 @@ local function json_encode(value)
     return json_encode_fallback(value or {})
 end
 
-local function url_encode(value)
-    value = tostring(value or ""):gsub("\r", " "):gsub("\n", " ")
-    value = value:gsub("([^%w%-%_%.%~ ])", function(char)
-        return string.format("%%%02X", string.byte(char))
-    end)
-    return value:gsub(" ", "+")
-end
-
 local function json_call(callback)
     local ok, result = pcall(callback)
     if ok then
@@ -331,9 +301,16 @@ local function detect_steam_path()
 end
 
 local function copy_public_assets()
-    local public = join_path(plugin_dir(), "public")
-    local webkit = join_path(plugin_dir(), "webkit")
     local steam_path = detect_steam_path()
+    if steam_path == "" then
+        runtime.last_injection.copy = { success = false, reason = "steam path not found" }
+        log_error("Steam path nao encontrado; pulando injecao visual")
+        return false
+    end
+
+    local public = join_path(plugin_dir(), "public")
+    local steamui = join_path(steam_path, "steamui")
+    local webkit = join_path(steamui, "webkit")
     local src_js = join_path(public, "skytools.js")
     local src_css = join_path(public, "skytools.css")
     local src_ico = join_path(public, "skytools_logo.ico")
@@ -344,66 +321,48 @@ local function copy_public_assets()
     local ico_webkit = copy_file(src_ico, join_path(webkit, "skytools_logo.ico"))
     local png_webkit = copy_file(src_png, join_path(webkit, "skytools_logo.png"))
     local fa_solid_webkit = copy_file(src_fa_solid, join_path(join_path(join_path(webkit, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
-    local js_legacy = false
-    local css_legacy = false
-    local ico_legacy = false
-    local png_legacy = false
-    local js_steamui_webkit = false
-    local css_steamui_webkit = false
-
-    if steam_path ~= "" then
-        local steamui = join_path(steam_path, "steamui")
-        local steamui_webkit = join_path(steamui, "webkit")
-        js_legacy = sync_file_if_different(src_js, join_path(steamui, "skytools.js"))
-        css_legacy = sync_file_if_different(src_css, join_path(steamui, "skytools.css"))
-        ico_legacy = sync_file_if_different(src_ico, join_path(steamui, "skytools_logo.ico"))
-        png_legacy = sync_file_if_different(src_png, join_path(steamui, "skytools_logo.png"))
-        js_steamui_webkit = sync_file_if_different(src_js, join_path(steamui_webkit, "skytools.js"))
-        css_steamui_webkit = sync_file_if_different(src_css, join_path(steamui_webkit, "skytools.css"))
-    end
+    local js_root = copy_file(src_js, join_path(steamui, "skytools.js"))
+    local css_root = copy_file(src_css, join_path(steamui, "skytools.css"))
+    local ico_root = copy_file(src_ico, join_path(steamui, "skytools_logo.ico"))
+    local png_root = copy_file(src_png, join_path(steamui, "skytools_logo.png"))
+    local fa_solid_root = copy_file(src_fa_solid, join_path(join_path(join_path(steamui, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
 
     runtime.last_injection.copy = {
-        success = js_webkit,
+        success = js_webkit or js_root,
+        steamPath = steam_path,
         jsWebkit = js_webkit,
         cssWebkit = css_webkit,
         icoWebkit = ico_webkit,
         pngWebkit = png_webkit,
         faSolidWebkit = fa_solid_webkit,
-        jsLegacy = js_legacy,
-        cssLegacy = css_legacy,
-        icoLegacy = ico_legacy,
-        pngLegacy = png_legacy,
-        jsSteamUiWebkit = js_steamui_webkit,
-        cssSteamUiWebkit = css_steamui_webkit
+        jsRoot = js_root,
+        cssRoot = css_root,
+        icoRoot = ico_root,
+        pngRoot = png_root,
+        faSolidRoot = fa_solid_root
     }
-    log_info("browser assets synced: jsWebkit=" .. tostring(js_webkit) .. ", jsLegacy=" .. tostring(js_legacy) .. ", jsSteamUiWebkit=" .. tostring(js_steamui_webkit))
-    return js_webkit
+    log_info("browser assets copied: jsWebkit=" .. tostring(js_webkit) .. ", cssWebkit=" .. tostring(css_webkit))
+    return js_webkit or js_root
 end
 
 local function inject_browser_assets()
     if millennium.add_browser_css ~= nil then
-        local ok, id = pcall(millennium.add_browser_css, BROWSER_CSS)
-        if ok and id ~= nil then
-            runtime.browser_css_id = id
+        runtime.browser_css_id = millennium.add_browser_css(BROWSER_CSS)
+        if runtime.browser_css_id == 0 then
+            runtime.browser_css_id = millennium.add_browser_css(BROWSER_CSS_WEBKIT)
         end
-        if runtime.browser_css_id == 0 or runtime.browser_css_id == -1 then
-            ok, id = pcall(millennium.add_browser_css, BROWSER_CSS_WEBKIT)
-            if ok and id ~= nil then
-                runtime.browser_css_id = id
-            end
+        if runtime.browser_css_id == 0 then
+            runtime.browser_css_id = millennium.add_browser_css(BROWSER_CSS_ROOT)
         end
     end
 
     if millennium.add_browser_js ~= nil then
-        local ok, id = pcall(millennium.add_browser_js, BROWSER_JS)
-        if ok and id ~= nil then
-            runtime.browser_js_id = id
+        runtime.browser_js_id = millennium.add_browser_js(BROWSER_JS)
+        if runtime.browser_js_id == 0 then
+            runtime.browser_js_id = millennium.add_browser_js(BROWSER_JS_WEBKIT)
         end
-        if runtime.browser_js_id == 0 or runtime.browser_js_id == -1 then
-            ok, id = pcall(millennium.add_browser_js, BROWSER_JS_WEBKIT)
-            if ok and id ~= nil then
-                runtime.browser_js_id = id
-            end
+        if runtime.browser_js_id == 0 then
+            runtime.browser_js_id = millennium.add_browser_js(BROWSER_JS_ROOT)
         end
     end
 
@@ -433,20 +392,18 @@ local function name_cache_path()
     return join_path(data_root(), "skytools-app-name-cache.json")
 end
 
-local function installed_index_path()
-    return join_path(data_root(), "skytools-job-installed.json")
-end
-
 local function history_path()
     return join_path(data_root(), "history.json")
 end
 
 local function launchers_dir()
-    return data_root()
+    local dir = join_path(data_root(), "launchers")
+    mkdirs(dir)
+    return dir
 end
 
 local function launcher_path(name)
-    return join_path(launchers_dir(), "skytools-" .. tostring(name or "launcher"))
+    return join_path(launchers_dir(), name)
 end
 
 local function ensure_launcher(name, content)
@@ -802,131 +759,50 @@ local function script_directories()
     return dirs
 end
 
-local function steam_library_paths()
-    local steam_path = detect_steam_path()
-    local libraries = {}
-    local seen = {}
-    local function add(path)
-        path = trim(path)
-        if path == "" then
-            return
-        end
-        local steamapps = join_path(path, "steamapps")
-        local key = steamapps:lower()
-        if seen[key] ~= true then
-            seen[key] = true
-            table.insert(libraries, steamapps)
-        end
-    end
-
-    if steam_path ~= "" then
-        add(steam_path)
-        local text = read_file(join_path(join_path(steam_path, "steamapps"), "libraryfolders.vdf")) or read_file(join_path(join_path(steam_path, "config"), "libraryfolders.vdf")) or ""
-        for path in text:gmatch('"path"%s+"([^"]+)"') do
-            add(path:gsub("\\\\", "\\"))
-        end
-    end
-    return libraries
-end
-
-local function steam_game_install_path(appid)
-    appid = tostring(appid or ""):match("(%d+)") or ""
-    if appid == "" then
-        return ""
-    end
-    for _, steamapps in ipairs(steam_library_paths()) do
-        local manifest = join_path(steamapps, "appmanifest_" .. appid .. ".acf")
-        local text = read_file(manifest)
-        if text ~= nil then
-            local installdir = text:match('"installdir"%s+"([^"]+)"')
-            if installdir ~= nil and trim(installdir) ~= "" then
-                return join_path(join_path(steamapps, "common"), installdir:gsub("\\\\", "\\"))
-            end
-        end
-    end
-    return ""
-end
-
-local function count_dlcs_from_script(path, appid)
-    local text = read_file(path)
-    if text == nil then
-        return 0
-    end
-    local root_appid = tostring(appid or "")
-    local seen = {}
-    local count = 0
-    for id in text:gmatch("addappid%s*%(%s*(%d+)") do
-        id = tostring(id or "")
-        if id ~= "" and id ~= root_appid and seen[id] ~= true then
-            seen[id] = true
-            count = count + 1
-        end
-    end
-    return count
-end
-
 local function list_script_files(script_dir)
-    local items = {}
-    local directory = trim(script_dir)
-    if directory == "" or not fs_ok or fs == nil or fs.list == nil then
-        return items
-    end
-
-    local ok, entries = pcall(fs.list, directory)
-    if not ok or type(entries) ~= "table" then
-        return items
-    end
-
-    for _, entry in ipairs(entries) do
-        local name = ""
-        local path = ""
-        if type(entry) == "table" then
-            name = trim(entry.name or entry.filename or "")
-            path = trim(entry.path or entry.fullPath or "")
-        else
-            path = trim(entry)
-            name = path:match("[^\\/]+$") or path
-        end
-        if name == "" and path ~= "" then
-            name = path:match("[^\\/]+$") or ""
-        end
-
-        local appid = name:match("^(%d+)%.lua%.disabled$") or name:match("^(%d+)%.lua$")
-        if appid ~= nil then
-            local full_path = path ~= "" and path or join_path(directory, name)
-            table.insert(items, {
-                appId = tonumber(appid) or 0,
-                appid = tonumber(appid) or 0,
-                fileName = name,
-                fullPath = full_path,
-                scriptDirectory = directory,
-                dlcCount = count_dlcs_from_script(full_path, appid),
-                isDisabled = name:match("%.disabled$") ~= nil
-            })
-        end
-    end
-
-    return items
+    -- Avoid LuaFileSystem in the Millennium backend process: on some builds it can
+    -- crash the plugin host with 0xC0000005 while iterating Steam folders.
+    return {}
 end
 
 local function jobs_dir()
-    return data_root()
+    local dir = join_path(data_root(), "jobs")
+    mkdirs(dir)
+    return dir
 end
 
 local function job_result_path(name)
-    return join_path(jobs_dir(), "skytools-job-" .. tostring(name or "job") .. ".json")
+    return join_path(jobs_dir(), tostring(name or "job") .. ".json")
 end
 
-local function run_minimized_command(command, wait_for_exit)
-    local start_flags = wait_for_exit and "/wait /min" or "/min"
-    local launch_command = "cmd.exe /c start \"SkyTools\" " .. start_flags .. " " .. tostring(command or "")
-    local ok = pcall(function()
-        return utils.exec(launch_command)
-    end)
-    if not ok then
-        log_error("Falha ao iniciar comando minimizado.")
+local function run_hidden_command(command, wait_for_exit)
+    local command_path = launcher_path("run-hidden-command.txt")
+    if not write_file(command_path, tostring(command or "")) then
+        return false
     end
-    return ok
+
+    local vbs_path = ensure_launcher("run-hidden.vbs", table.concat({
+        'Set fso = CreateObject("Scripting.FileSystemObject")',
+        'Set sh = CreateObject("WScript.Shell")',
+        'cmd = ""',
+        'waitForExit = False',
+        'If WScript.Arguments.Count > 0 Then',
+        '  commandPath = WScript.Arguments.Item(0)',
+        '  If fso.FileExists(commandPath) Then',
+        '    Set file = fso.OpenTextFile(commandPath, 1, False)',
+        '    cmd = file.ReadAll',
+        '    file.Close',
+        '    cmd = Replace(cmd, vbCr, "")',
+        '    cmd = Replace(cmd, vbLf, "")',
+        '  End If',
+        'End If',
+        'If WScript.Arguments.Count > 1 Then waitForExit = (LCase(WScript.Arguments.Item(1)) = "true")',
+        'If cmd <> "" Then sh.Run cmd, 0, waitForExit'
+    }, "\r\n"))
+
+    return pcall(function()
+        return utils.exec("wscript.exe //B //Nologo " .. quote_arg(vbs_path) .. " " .. quote_arg(command_path) .. " " .. quote_arg(wait_for_exit and "true" or "false"))
+    end)
 end
 
 local function scan_installed_with_helper(directories)
@@ -939,7 +815,8 @@ local function scan_installed_with_helper(directories)
     delete_file(result_path)
 
     local command = {
-        "cscript.exe",
+        "wscript.exe",
+        "//B",
         "//Nologo",
         quote_arg(helper),
         quote_arg(result_path)
@@ -950,7 +827,7 @@ local function scan_installed_with_helper(directories)
         end
     end
 
-    local ok = run_minimized_command(table.concat(command, " "), false)
+    local ok = run_hidden_command(table.concat(command, " "), false)
     if not ok then
         return nil
     end
@@ -1048,7 +925,8 @@ local function resolve_missing_names(appids, names)
     delete_file(result_path)
 
     local command = {
-        "cscript.exe",
+        "wscript.exe",
+        "//B",
         "//Nologo",
         quote_arg(helper),
         quote_arg(result_path)
@@ -1057,7 +935,7 @@ local function resolve_missing_names(appids, names)
         table.insert(command, quote_arg(appid))
     end
 
-    local ok = run_minimized_command(table.concat(command, " "), false)
+    local ok = run_hidden_command(table.concat(command, " "), false)
     if not ok then
         return names
     end
@@ -1112,6 +990,11 @@ local function resolve_game_name_for_appid(appid, candidate)
         return trim(names[id])
     end
 
+    names = resolve_missing_names({ id }, names)
+    if trim(names[id]) ~= "" then
+        return trim(names[id])
+    end
+
     return "AppID " .. id
 end
 
@@ -1127,176 +1010,6 @@ local function save_manifest_records(records)
     write_json(manifest_records_path(), records or {})
 end
 
-local function normalize_installed_item(item)
-    if type(item) ~= "table" then
-        return nil
-    end
-    local appid = tonumber(get_prop(item, "appId", "appid", "AppId", 0)) or 0
-    if appid <= 0 then
-        return nil
-    end
-    local full_path = trim(get_prop(item, "fullPath", "FullPath", "scriptPath", "ScriptPath", ""))
-    local script_dir = trim(get_prop(item, "scriptDirectory", "ScriptDirectory", ""))
-    if script_dir == "" and full_path ~= "" then
-        script_dir = parent_dir(full_path) or ""
-    end
-    if full_path == "" and script_dir ~= "" then
-        full_path = join_path(script_dir, tostring(appid) .. ".lua")
-    end
-    local file_name = trim(get_prop(item, "fileName", "FileName", ""))
-    if file_name == "" then
-        file_name = tostring(appid) .. ".lua"
-    end
-    return {
-        appId = appid,
-        appid = appid,
-        fileName = file_name,
-        fullPath = full_path,
-        scriptDirectory = script_dir,
-        dlcCount = tonumber(get_prop(item, "dlcCount", "DlcCount", "dlc_count", 0)) or 0,
-        isDisabled = get_prop(item, "isDisabled", "IsDisabled", false) == true
-    }
-end
-
-local function load_installed_index()
-    local raw = read_json(installed_index_path(), nil)
-    local data = nil
-    if type(raw) == "table" and type(raw.data) == "table" then
-        data = raw.data
-    elseif type(raw) == "table" then
-        data = raw
-    end
-    if type(data) ~= "table" then
-        return {}
-    end
-
-    local items = {}
-    local seen = {}
-    for _, item in pairs(data) do
-        local normalized = normalize_installed_item(item)
-        if normalized ~= nil then
-            local key = tostring(normalized.appId)
-            if seen[key] ~= true then
-                seen[key] = true
-                table.insert(items, normalized)
-            end
-        end
-    end
-    return items
-end
-
-local function installed_items_from_name_cache()
-    local items = {}
-    local names = name_cache_map()
-    for appid, _ in pairs(names) do
-        local numeric = tonumber(appid) or 0
-        if numeric > 0 then
-            local script_path = join_path(active_script_directory(), tostring(numeric) .. ".lua")
-            table.insert(items, {
-                appId = numeric,
-                appid = numeric,
-                fileName = tostring(numeric) .. ".lua",
-                fullPath = script_path,
-                scriptDirectory = active_script_directory(),
-                dlcCount = count_dlcs_from_script(script_path, numeric),
-                isDisabled = false
-            })
-        end
-    end
-    table.sort(items, function(left, right)
-        return (tonumber(left.appId or 0) or 0) < (tonumber(right.appId or 0) or 0)
-    end)
-    return items
-end
-
-local function save_installed_index(items)
-    write_json(installed_index_path(), {
-        success = true,
-        data = items or {},
-        error = ""
-    })
-end
-
-local function merge_manifest_records_into_index(items)
-    local by_id = {}
-    local merged = {}
-    for _, item in ipairs(items or {}) do
-        local normalized = normalize_installed_item(item)
-        if normalized ~= nil then
-            local key = tostring(normalized.appId)
-            by_id[key] = normalized
-            table.insert(merged, normalized)
-        end
-    end
-
-    for _, record in pairs(load_manifest_records()) do
-        if type(record) == "table" then
-            local appid = tonumber(get_prop(record, "AppId", "appId", 0)) or 0
-            if appid > 0 and by_id[tostring(appid)] == nil then
-                local script_path = trim(get_prop(record, "ScriptPath", "scriptPath", ""))
-                if script_path == "" then
-                    script_path = join_path(active_script_directory(), tostring(appid) .. ".lua")
-                end
-                local item = normalize_installed_item({
-                    appId = appid,
-                    fullPath = script_path,
-                    scriptDirectory = parent_dir(script_path) or active_script_directory(),
-                    dlcCount = count_dlcs_from_script(script_path, appid),
-                    isDisabled = false
-                })
-                if item ~= nil then
-                    by_id[tostring(appid)] = item
-                    table.insert(merged, item)
-                end
-            end
-        end
-    end
-
-    return merged
-end
-
-local function update_installed_index_entry(appid, patch)
-    appid = tonumber(appid) or 0
-    if appid <= 0 then
-        return
-    end
-    local items = load_installed_index()
-    local updated = false
-    for index, item in ipairs(items) do
-        if tonumber(item.appId or item.appid or 0) == appid then
-            for key, value in pairs(patch or {}) do
-                item[key] = value
-            end
-            item.appId = appid
-            item.appid = appid
-            items[index] = normalize_installed_item(item) or item
-            updated = true
-            break
-        end
-    end
-    if updated ~= true then
-        local item = patch or {}
-        item.appId = appid
-        item.appid = appid
-        table.insert(items, normalize_installed_item(item) or item)
-    end
-    save_installed_index(items)
-end
-
-local function remove_installed_index_entry(appid)
-    appid = tonumber(appid) or 0
-    if appid <= 0 then
-        return
-    end
-    local kept = {}
-    for _, item in ipairs(load_installed_index()) do
-        if tonumber(item.appId or item.appid or 0) ~= appid then
-            table.insert(kept, item)
-        end
-    end
-    save_installed_index(kept)
-end
-
 local function installed_direct()
     log_info("SkyToolsInstalled iniciado")
     local cached = cache_get("installed", 8)
@@ -1305,33 +1018,9 @@ local function installed_direct()
         return cached
     end
 
-    local index_items = {}
-    local by_id = {}
-    for _, directory in ipairs(script_directories()) do
-        for _, item in ipairs(list_script_files(directory)) do
-            local key = tostring(item.appId or item.appid or "")
-            if key ~= "" and (by_id[key] == nil or item.isDisabled ~= true) then
-                by_id[key] = item
-            end
-        end
-    end
-    for _, item in pairs(by_id) do
-        table.insert(index_items, item)
-    end
-
-    if #index_items > 0 then
-        log_info("SkyToolsInstalled fs.list retornou: " .. tostring(#index_items))
-    else
-        index_items = load_installed_index()
-    end
-
-    if #index_items == 0 then
-        index_items = installed_items_from_name_cache()
-        log_info("SkyToolsInstalled usando cache de nomes: " .. tostring(#index_items))
-    end
-
-    local scripts = merge_manifest_records_into_index(index_items)
-    log_info("SkyToolsInstalled indice retornou: " .. tostring(#scripts))
+    local directories = script_directories()
+    local scripts = scan_installed_with_helper(directories) or {}
+    log_info("SkyToolsInstalled scan retornou: " .. tostring(#scripts))
 
     table.sort(scripts, function(left, right)
         return (tonumber(left.appId or left.appid or 0) or 0) < (tonumber(right.appId or right.appid or 0) or 0)
@@ -1350,29 +1039,31 @@ local function installed_direct()
         end
     end
 
+    local missing_appids = {}
+    for _, script in ipairs(scripts) do
+        local id = tostring(script.appId or script.appid or "")
+        if id ~= "" and trim(record_names[id] or names[id] or "") == "" then
+            table.insert(missing_appids, id)
+        end
+    end
+    names = resolve_missing_names(missing_appids, names)
+
     for _, script in ipairs(scripts) do
         script.appId = tonumber(script.appId or script.appid or 0) or 0
         script.appid = script.appId
         local id = tostring(script.appId)
-        script.gameName = record_names[id] or names[id] or "AppID " .. id
+        script.gameName = record_names[id] or names[id] or ""
         script.name = script.gameName
         script.dlcCount = tonumber(script.dlcCount or script.DlcCount or script.dlc_count or 0) or 0
-        if script.dlcCount <= 0 and trim(script.fullPath) ~= "" then
-            script.dlcCount = count_dlcs_from_script(script.fullPath, script.appId)
-        end
         script.imageUrl = "https://cdn.akamai.steamstatic.com/steam/apps/" .. id .. "/header.jpg"
         script.hasDenuvo = false
         script.hasAvailableFix = false
         script.hasAppliedFix = false
         script.isSteamInstalled = false
-        script.gamePath = steam_game_install_path(script.appId)
         script.metadataLoaded = false
         script.metadataLoading = false
     end
 
-    if #scripts > 0 then
-        save_installed_index(scripts)
-    end
     return cache_set("installed", scripts, 8)
 end
 
@@ -1384,13 +1075,6 @@ local function cached_installed_count()
 
     local seen = {}
     local count = 0
-    for _, item in ipairs(load_installed_index()) do
-        local appid = tostring(item.appId or item.appid or "")
-        if appid ~= "" and seen[appid] ~= true then
-            seen[appid] = true
-            count = count + 1
-        end
-    end
     for _, record in pairs(load_manifest_records()) do
         if type(record) == "table" then
             local appid = tostring(get_prop(record, "AppId", "appId", ""))
@@ -1415,13 +1099,12 @@ local function status_direct(payload)
         configuredIntegration = trim(get_prop(settings, "IntegrationTool", "integrationTool", "SkyTools")),
         installedCount = cached_installed_count(),
         preferredApi = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
+        apiOrderCount = count_map_values(get_prop(settings, "ApiOrder", "apiOrder", {})),
         hasMorrenusKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")) ~= "",
         pluginId = get_prop(payload, "pluginId", "pluginId", PLUGIN_ID),
         injection = runtime.last_injection,
         browserJsId = runtime.browser_js_id,
         browserCssId = runtime.browser_css_id,
-        fsAvailable = fs_ok and fs ~= nil,
-        fsListAvailable = fs_ok and fs ~= nil and fs.list ~= nil,
         backendMode = "lua-inline-wsh-installer"
     }
 end
@@ -1429,107 +1112,36 @@ end
 local function apis_direct()
     local settings = load_settings()
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
-    local native_overrides = get_prop(settings, "NativeManifestApis", "nativeManifestApis", {})
-    local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
     local api_order = get_prop(settings, "ApiOrder", "apiOrder", {})
+    local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
+    local native_api_keys = get_prop(settings, "NativeApiKeys", "nativeApiKeys", {})
     if type(custom) ~= "table" then
         custom = {}
     end
-    if type(native_overrides) ~= "table" then
-        native_overrides = {}
+    if type(api_order) ~= "table" then
+        api_order = {}
     end
     if type(disabled_api_ids) ~= "table" then
         disabled_api_ids = {}
     end
-    if type(api_order) ~= "table" then
-        api_order = DEFAULT_API_ORDER
+    if type(native_api_keys) ~= "table" then
+        native_api_keys = {}
     end
-
     local disabled = {}
     for _, id in ipairs(disabled_api_ids) do
         disabled[tostring(id):lower()] = true
     end
-
-    local function native_api(id, name, requires_key, url)
-        local override = native_overrides[id] or native_overrides[id:lower()] or {}
-        if type(override) ~= "table" then
-            override = {}
-        end
-        local api_key = trim(get_prop(override, "apiKey", "ApiKey", ""))
-        if id == "morrenus" and api_key == "" then
-            api_key = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", ""))
-        end
-        return {
-            id = id,
-            name = trim(get_prop(override, "name", "Name", name)),
-            editable = true,
-            native = true,
-            enabled = disabled[id] ~= true and get_prop(override, "enabled", "Enabled", true) ~= false,
-            requiresKey = requires_key,
-            urlTemplate = trim(get_prop(override, "urlTemplate", "UrlTemplate", url)),
-            apiKey = api_key,
-            useProxy = get_prop(override, "useProxy", "UseProxy", false) == true,
-            proxyUrlTemplate = trim(get_prop(override, "proxyUrlTemplate", "ProxyUrlTemplate", "")),
-            successCode = tonumber(get_prop(override, "successCode", "SuccessCode", 200)) or 200,
-            unavailableCode = tonumber(get_prop(override, "unavailableCode", "UnavailableCode", 404)) or 404
-        }
-    end
-
     return {
         preferred = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
         morrenusApiKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")),
         apiOrder = api_order,
         builtIn = {
-            native_api("skyapi", "SkyAPI", false, "https://raw.githubusercontent.com/skyflarefox/Skyapi/refs/heads/main/<appid>.zip"),
-            native_api("morrenus", "Morrenus", true, "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>"),
-            native_api("sushi", "Sushi", false, "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/refs/heads/main/<appid>.zip")
+            { id = "morrenus", name = "Morrenus", editable = false, native = true, enabled = disabled.morrenus ~= true, requiresKey = true, apiKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")), urlTemplate = "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>" },
+            { id = "sushi", name = "Sushi", editable = false, native = true, enabled = disabled.sushi ~= true, requiresKey = false, apiKey = trim(native_api_keys.sushi or ""), urlTemplate = "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/refs/heads/main/<appid>.zip" },
+            { id = "skyapi", name = "SkyAPI", editable = false, native = true, enabled = disabled.skyapi ~= true, requiresKey = false, apiKey = trim(native_api_keys.skyapi or ""), urlTemplate = "https://raw.githubusercontent.com/skyflarefox/Skyapi/refs/heads/main/<appid>.zip" }
         },
         custom = custom
     }
-end
-
-local function clean_api_order(order, custom, include_id)
-    local allowed = { skyapi = true, morrenus = true, sushi = true }
-    for _, item in ipairs(custom or {}) do
-        if type(item) == "table" then
-            local id = trim(get_prop(item, "id", "Id", ""))
-            if id ~= "" then
-                allowed[id:lower()] = true
-            end
-        end
-    end
-    if include_id ~= nil and trim(include_id) ~= "" then
-        allowed[trim(include_id):lower()] = true
-    end
-
-    local clean = {}
-    local seen = {}
-    local function add(id)
-        id = trim(id)
-        local key = id:lower()
-        if id ~= "" and allowed[key] == true and seen[key] ~= true then
-            seen[key] = true
-            table.insert(clean, id)
-        end
-    end
-
-    if type(order) == "table" then
-        for _, id in ipairs(order) do
-            add(id)
-        end
-    end
-    for _, id in ipairs(DEFAULT_API_ORDER) do
-        add(id)
-    end
-    for _, item in ipairs(custom or {}) do
-        if type(item) == "table" then
-            add(get_prop(item, "id", "Id", ""))
-        end
-    end
-    if include_id ~= nil then
-        add(include_id)
-    end
-    return clean
 end
 
 local function remove_game_direct(payload)
@@ -1563,7 +1175,6 @@ local function remove_game_direct(payload)
         end
     end
     save_manifest_records(kept)
-    remove_installed_index_entry(appid)
     cache_clear()
     return { appId = appid, removed = true }
 end
@@ -1574,10 +1185,10 @@ local function save_api_direct(payload)
     if type(custom) ~= "table" then
         custom = {}
     end
-    local native_ids = { skyapi = true, morrenus = true, sushi = true }
 
     local api = {
         id = trim(get_prop(payload, "id", "Id", "")),
+        native = get_prop(payload, "native", "Native", false) == true,
         name = trim(get_prop(payload, "name", "Name", "")),
         urlTemplate = trim(get_prop(payload, "urlTemplate", "UrlTemplate", "")),
         apiKey = trim(get_prop(payload, "apiKey", "ApiKey", "")),
@@ -1587,7 +1198,39 @@ local function save_api_direct(payload)
         unavailableCode = tonumber(get_prop(payload, "unavailableCode", "UnavailableCode", 404)) or 404,
         enabled = get_prop(payload, "enabled", "Enabled", true) ~= false
     }
-    local lower_id = api.id:lower()
+
+    local native_ids = { morrenus = true, sushi = true, skyapi = true }
+    if native_ids[api.id:lower()] == true then
+        local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
+        local native_api_keys = get_prop(settings, "NativeApiKeys", "nativeApiKeys", {})
+        if type(disabled_api_ids) ~= "table" then
+            disabled_api_ids = {}
+        end
+        if type(native_api_keys) ~= "table" then
+            native_api_keys = {}
+        end
+
+        local kept_disabled = {}
+        for _, item in ipairs(disabled_api_ids) do
+            if tostring(item):lower() ~= api.id:lower() then
+                table.insert(kept_disabled, item)
+            end
+        end
+        if api.enabled == false then
+            table.insert(kept_disabled, api.id)
+        end
+        settings.DisabledApiIds = kept_disabled
+
+        native_api_keys[api.id] = api.apiKey
+        settings.NativeApiKeys = native_api_keys
+        if api.id:lower() == "morrenus" then
+            settings.MorrenusApiKey = api.apiKey
+        end
+        write_json(settings_path(), settings)
+        cache_clear()
+        return { id = api.id, name = api.name, native = true, enabled = api.enabled }
+    end
+    end
 
     if api.name == "" then
         return { success = false, error = "Informe um nome para a API." }
@@ -1597,39 +1240,6 @@ local function save_api_direct(payload)
     end
     if api.id == "" then
         api.id = "skytools-" .. tostring(os.time())
-        lower_id = api.id:lower()
-    end
-
-    if native_ids[lower_id] == true then
-        local native_overrides = get_prop(settings, "NativeManifestApis", "nativeManifestApis", {})
-        local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
-        if type(native_overrides) ~= "table" then
-            native_overrides = {}
-        end
-        if type(disabled_api_ids) ~= "table" then
-            disabled_api_ids = {}
-        end
-
-        native_overrides[lower_id] = api
-        settings.NativeManifestApis = native_overrides
-        if lower_id == "morrenus" then
-            settings.MorrenusApiKey = api.apiKey
-        end
-
-        local kept_disabled = {}
-        for _, id in ipairs(disabled_api_ids) do
-            if tostring(id):lower() ~= lower_id then
-                table.insert(kept_disabled, id)
-            end
-        end
-        if api.enabled == false then
-            table.insert(kept_disabled, lower_id)
-        end
-        settings.DisabledApiIds = kept_disabled
-        settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), custom, lower_id)
-        write_json(settings_path(), settings)
-        cache_clear()
-        return api
     end
 
     local replaced = false
@@ -1644,7 +1254,20 @@ local function save_api_direct(payload)
     end
 
     settings.CustomManifestApis = custom
-    settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), custom, api.id)
+    local api_order = get_prop(settings, "ApiOrder", "apiOrder", {})
+    if type(api_order) ~= "table" then
+        api_order = {}
+    end
+    local found_in_order = false
+    for _, item in ipairs(api_order) do
+        if tostring(item):lower() == api.id:lower() then
+            found_in_order = true
+        end
+    end
+    if not found_in_order then
+        table.insert(api_order, api.id)
+        settings.ApiOrder = api_order
+    end
     write_json(settings_path(), settings)
     cache_clear()
     return api
@@ -1655,19 +1278,24 @@ local function save_api_settings_direct(payload)
     local preferred = trim(get_first_prop(payload, { "preferred", "preferredApi", "PreferredDownloadApi" }, "Automatic"))
     local morrenus_key = trim(get_prop(payload, "morrenusApiKey", "MorrenusApiKey", ""))
     local api_order = get_prop(payload, "apiOrder", "ApiOrder", nil)
+    if type(api_order) == "table" then
+        local clean_order = {}
+        local seen = {}
+        for _, item in ipairs(api_order) do
+            local id = trim(item)
+            local key = id:lower()
+            if id ~= "" and seen[key] ~= true then
+                seen[key] = true
+                table.insert(clean_order, id)
+            end
+        end
+        settings.ApiOrder = clean_order
+    end
     if preferred ~= "" then
         settings.PreferredDownloadApi = preferred
     end
     if morrenus_key ~= "" then
         settings.MorrenusApiKey = morrenus_key
-    end
-    if type(api_order) == "table" then
-        local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
-        if type(custom) ~= "table" then
-            custom = {}
-        end
-        settings.ApiOrder = clean_api_order(api_order, custom, nil)
-        settings.PreferredDownloadApi = "Automatic"
     end
     write_json(settings_path(), settings)
     cache_clear()
@@ -1690,7 +1318,7 @@ local function delete_api_direct(payload)
             end
         end
         if not exists then
-            table.insert(disabled_api_ids, lower_id)
+            table.insert(disabled_api_ids, id)
         end
         settings.DisabledApiIds = disabled_api_ids
         write_json(settings_path(), settings)
@@ -1711,7 +1339,16 @@ local function delete_api_direct(payload)
         end
     end
     settings.CustomManifestApis = kept
-    settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), kept, nil)
+    local api_order = get_prop(settings, "ApiOrder", "apiOrder", {})
+    if type(api_order) == "table" then
+        local kept_order = {}
+        for _, item in ipairs(api_order) do
+            if tostring(item):lower() ~= id:lower() then
+                table.insert(kept_order, item)
+            end
+        end
+        settings.ApiOrder = kept_order
+    end
     local preferred = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic"))
     if preferred:lower() == id:lower() or (removed_name ~= "" and preferred:lower() == removed_name:lower()) then
         settings.PreferredDownloadApi = "Automatic"
@@ -1833,7 +1470,8 @@ function run_wscript_installer(payload)
     end
 
     local command = table.concat({
-        "cscript.exe",
+        "wscript.exe",
+        "//B",
         "//Nologo",
         quote_arg(installer),
         quote_arg(root),
@@ -1847,12 +1485,12 @@ function run_wscript_installer(payload)
     }, " ")
 
     log_info("SkyTools installer iniciado para appid=" .. tostring(appid))
-    local ok = run_minimized_command(command, false)
+    local ok = run_hidden_command(command, false)
     local exec_result = ""
     if not ok then
         return {
             success = false,
-            error = "Nao foi possivel iniciar o instalador interno. Verifique se o Windows Script Host esta habilitado."
+            error = "Nao foi possivel iniciar o instalador interno oculto. Verifique se o Windows Script Host esta habilitado."
         }
     end
 
@@ -1879,19 +1517,6 @@ function run_wscript_installer(payload)
             details = preview:sub(1, 500)
         }
     end
-    if result.success == true then
-        local data = get_prop(result, "data", "Data", {})
-        if type(data) == "table" then
-            local script_path = trim(get_prop(data, "scriptPath", "ScriptPath", ""))
-            update_installed_index_entry(appid, {
-                fileName = tostring(appid) .. ".lua",
-                fullPath = script_path ~= "" and script_path or join_path(active_script_directory(), tostring(appid) .. ".lua"),
-                scriptDirectory = script_path ~= "" and (parent_dir(script_path) or active_script_directory()) or active_script_directory(),
-                dlcCount = tonumber(get_prop(data, "dlcCount", "DlcCount", 0)) or 0,
-                isDisabled = false
-            })
-        end
-    end
     cache_clear()
     return result
 end
@@ -1901,7 +1526,9 @@ local function ps_quote(value)
 end
 
 local function repair_script_path(kind)
-    return join_path(data_root(), "skytools-repair-" .. tostring(kind or "task") .. ".ps1")
+    local dir = join_path(data_root(), "repairs")
+    mkdirs(dir)
+    return join_path(dir, "repair-" .. tostring(kind or "task") .. "-" .. tostring(os.time()) .. ".ps1")
 end
 
 local function launch_elevated_powershell(script_path)
@@ -1911,15 +1538,15 @@ local function launch_elevated_powershell(script_path)
         'If WScript.Arguments.Count > 0 Then scriptPath = WScript.Arguments.Item(0)',
         'If scriptPath <> "" Then',
         '  args = "-NoProfile -ExecutionPolicy Bypass -File " & Chr(34) & scriptPath & Chr(34)',
-        '  app.ShellExecute "powershell.exe", args, "", "runas", 7',
+        '  app.ShellExecute "powershell.exe", args, "", "runas", 0',
         'End If'
     }, "\r\n"))
-    local ok = run_minimized_command("cscript.exe //Nologo " .. quote_arg(vbs_path) .. " " .. quote_arg(script_path), false)
+    local ok = run_hidden_command("wscript.exe //B //Nologo " .. quote_arg(vbs_path) .. " " .. quote_arg(script_path), false)
     return ok
 end
 
 local function run_powershell_script(script_path)
-    return run_minimized_command("powershell.exe -WindowStyle Minimized -NoProfile -ExecutionPolicy Bypass -File " .. quote_arg(script_path), false)
+    return run_hidden_command("powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File " .. quote_arg(script_path), false)
 end
 
 local function run_repair_direct(payload)
@@ -1958,7 +1585,9 @@ Get-WmiObject -Class Win32_IP4RouteTable |
         message = "Cache da Steam limpo e Steam reiniciada."
     elseif repair == "vcredist" or repair == "vcredist2022" or repair == "visualcpp" then
         elevated = true
-        local exe_path = join_path(data_root(), "SkyTools-VisualCppRedist_AIO_x86_x64.exe")
+        local download_dir = join_path(data_root(), "downloads")
+        mkdirs(download_dir)
+        local exe_path = join_path(download_dir, "VisualCppRedist_AIO_x86_x64.exe")
         script = "$ErrorActionPreference = 'Stop'\r\n" ..
             "$file = " .. ps_quote(exe_path) .. "\r\n" ..
             "Invoke-WebRequest 'https://github.com/abbodi1406/vcredist/releases/latest/download/VisualCppRedist_AIO_x86_x64.exe' -OutFile $file\r\n" ..
@@ -1981,10 +1610,6 @@ local function find_fix_sources_direct(payload)
     payload = normalize_payload(payload)
     local appid = tostring(payload_appid(payload))
     local name = trim(get_prop(payload, "name", "gameName", appid))
-    local game_path = trim(get_prop(payload, "gamePath", "installPath", ""))
-    if game_path == "" then
-        game_path = steam_game_install_path(appid)
-    end
     local sources = {}
 
     local helper = fixes_helper_path()
@@ -1992,14 +1617,15 @@ local function find_fix_sources_direct(payload)
         local result_path = job_result_path("fixes-" .. appid)
         delete_file(result_path)
         local command = table.concat({
-            "cscript.exe",
+            "wscript.exe",
+            "//B",
             "//Nologo",
             quote_arg(helper),
             quote_arg(result_path),
             quote_arg(appid),
             quote_arg(name)
         }, " ")
-        run_minimized_command(command, false)
+        run_hidden_command(command, false)
         local waited = 0
         while waited < 15000 and not is_file(result_path) do
             sleep_ms(250)
@@ -2015,36 +1641,25 @@ local function find_fix_sources_direct(payload)
         end
     end
 
-    for _, source in ipairs(sources) do
-        if type(source) == "table" then
-            source.provider = trim(get_prop(source, "provider", "Provider", "Ryuu"))
-            source.action = "apply"
-            source.gamePath = game_path
-        end
-    end
-
     if #sources == 0 then
         table.insert(sources, {
             name = "Pesquisar no Ryuu",
             type = "Busca manual",
             provider = "Ryuu",
             downloadUrl = "https://generator.ryuu.lol/fixes",
-            action = "open",
+            size = ""
+        })
+        table.insert(sources, {
+            name = "Pesquisar no Online-Fix",
+            type = "Busca manual",
+            provider = "Online-Fix",
+            downloadUrl = "https://online-fix.me/index.php?do=search&subaction=search&story=" .. name,
             size = ""
         })
     end
 
-    table.insert(sources, {
-        name = "Pesquisar no OnlineFix",
-        type = "Link externo",
-        provider = "OnlineFix",
-        action = "copy",
-        downloadUrl = "https://online-fix.me/index.php?do=search&subaction=search&story=" .. url_encode(name ~= "" and name or appid),
-        size = ""
-    })
-
     return {
-        gamePath = game_path,
+        gamePath = "",
         sources = sources
     }
 end
@@ -2078,7 +1693,6 @@ local function apply_fix_direct(payload)
     payload = normalize_payload(payload)
     local appid = tostring(get_prop(payload, "appid", "appId", ""))
     local name = trim(get_prop(payload, "name", "gameName", appid))
-    local game_path = trim(get_prop(payload, "gamePath", "installPath", ""))
     local source = get_prop(payload, "source", "sourceJson", {})
     if type(source) == "string" then
         source = json_decode(source, {})
@@ -2091,88 +1705,6 @@ local function apply_fix_direct(payload)
     if url == "" then
         return { success = false, error = "Fonte sem link para abrir." }
     end
-    if game_path == "" then
-        game_path = trim(get_prop(source, "gamePath", "installPath", ""))
-    end
-    if game_path == "" then
-        game_path = steam_game_install_path(appid)
-    end
-
-    local provider = trim(get_prop(source, "provider", "Provider", ""))
-    local action = trim(get_prop(source, "action", "Action", ""))
-    if provider:lower():find("online", 1, true) ~= nil or action == "copy" then
-        return {
-            appId = tonumber(appid) or appid,
-            name = name,
-            url = url,
-            action = "copy",
-            message = "Link OnlineFix pronto para copiar."
-        }
-    end
-
-    if url:lower():match("%.zip") == nil then
-        return {
-            success = false,
-            error = "Aplicacao automatica suporta apenas pacotes .zip. Abra o link manualmente para este pacote.",
-            url = url
-        }
-    end
-    if game_path == "" then
-        return { success = false, error = "Pasta instalada do jogo nao encontrada." }
-    end
-
-    local script_path = join_path(data_root(), "skytools-apply-fix-" .. appid .. ".ps1")
-    local package_path = join_path(data_root(), "skytools-fix-" .. appid .. ".zip")
-    local extract_path = join_path(data_root(), "skytools-fix-" .. appid .. "-extract")
-    local backup_path = join_path(data_root(), "fix-backups\\" .. appid .. "\\" .. tostring(os.time()))
-    local log_path = join_path(game_path, "skytools-fix-log-" .. appid .. ".log")
-    local script = table.concat({
-        "$ErrorActionPreference = 'Stop'",
-        "$url = " .. ps_quote(url),
-        "$appid = " .. ps_quote(appid),
-        "$game = " .. ps_quote(name ~= "" and name or ("AppID " .. appid)),
-        "$gamePath = " .. ps_quote(game_path),
-        "$package = " .. ps_quote(package_path),
-        "$extract = " .. ps_quote(extract_path),
-        "$backup = " .. ps_quote(backup_path),
-        "$log = " .. ps_quote(log_path),
-        "if (!(Test-Path -LiteralPath $gamePath)) { throw 'Pasta do jogo nao encontrada.' }",
-        "Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue",
-        "New-Item -ItemType Directory -Path (Split-Path -Parent $package) -Force | Out-Null",
-        "Invoke-WebRequest -Uri $url -OutFile $package",
-        "Expand-Archive -LiteralPath $package -DestinationPath $extract -Force",
-        "$sourceRoot = $extract",
-        "$appidDir = Join-Path $extract $appid",
-        "if (Test-Path -LiteralPath $appidDir) { $sourceRoot = $appidDir }",
-        "$gameRoot = [IO.Path]::GetFullPath($gamePath).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
-        "$sourceRootFull = [IO.Path]::GetFullPath($sourceRoot).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
-        "$files = Get-ChildItem -LiteralPath $sourceRoot -File -Recurse",
-        "if (!$files -or $files.Count -eq 0) { throw 'Pacote de correcao vazio.' }",
-        "New-Item -ItemType Directory -Path $backup -Force | Out-Null",
-        "$written = @()",
-        "foreach ($file in $files) {",
-        "  $fileFull = [IO.Path]::GetFullPath($file.FullName)",
-        "  if (!$fileFull.StartsWith($sourceRootFull, [StringComparison]::OrdinalIgnoreCase)) { continue }",
-        "  $relative = $fileFull.Substring($sourceRootFull.Length)",
-        "  $dest = [IO.Path]::GetFullPath((Join-Path $gameRoot $relative))",
-        "  if (!$dest.StartsWith($gameRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }",
-        "  if (Test-Path -LiteralPath $dest) {",
-        "    $backupDest = Join-Path $backup $relative",
-        "    New-Item -ItemType Directory -Path (Split-Path -Parent $backupDest) -Force | Out-Null",
-        "    Copy-Item -LiteralPath $dest -Destination $backupDest -Force",
-        "  }",
-        "  New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null",
-        "  Copy-Item -LiteralPath $file.FullName -Destination $dest -Force",
-        "  $written += $relative",
-        "}",
-        "$entry = @('[FIX]', 'Date: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), 'Game: ' + $game, 'Provider: Ryuu', 'Download URL: ' + $url, 'Backup: ' + $backup, 'Files:') + $written + @('[/FIX]', '')",
-        "Add-Content -LiteralPath $log -Value $entry -Encoding UTF8"
-    }, "\r\n")
-    write_file(script_path, script)
-    local ok = run_powershell_script(script_path)
-    if not ok then
-        return { success = false, error = "Nao foi possivel iniciar a aplicacao da correcao." }
-    end
 
     local records_path = join_path(data_root(), "fix-actions.json")
     local records = read_json(records_path, {})
@@ -2184,7 +1716,6 @@ local function apply_fix_direct(payload)
         name = name,
         source = source,
         url = url,
-        gamePath = game_path,
         createdAt = os.date("%Y-%m-%dT%H:%M:%S")
     })
     write_json(records_path, records)
@@ -2193,8 +1724,7 @@ local function apply_fix_direct(payload)
         appId = tonumber(appid) or appid,
         name = name,
         url = url,
-        gamePath = game_path,
-        message = "Correcao Ryuu iniciada em segundo plano."
+        message = "Fonte preparada. Abra o link e siga as instrucoes da pagina."
     }
 end
 
@@ -2450,11 +1980,8 @@ _G["skytools_integration"] = skytools_integration
 
 local function on_load()
     pcall(function()
-        log_info("SkyTools Lua backend carregado em " .. safe_backend_path())
         millennium.ready()
     end)
-    pcall(copy_public_assets)
-    pcall(inject_browser_assets)
 end
 
 local function on_unload()
