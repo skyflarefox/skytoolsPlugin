@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var SKYTOOLS_UI_VERSION = "2026-07-14-stable-cache-1";
+  var SKYTOOLS_UI_VERSION = "2026-07-14-restore-backup-ryuu-1";
 
   if (window.__skytoolsPluginLoaded && window.__skytoolsPluginVersion === SKYTOOLS_UI_VERSION) {
     return;
@@ -18,6 +18,7 @@
   window.__skytoolsPluginVersion = SKYTOOLS_UI_VERSION;
 
   var PLUGIN_ID = "skytools-plugin";
+  var API_ORDER_STORAGE_KEY = "SkyTools.ApiOrder";
   var state = {
     lastUrl: "",
     appid: "",
@@ -26,14 +27,21 @@
     activeTab: "inicio",
     status: null,
     installed: null,
+    fixGames: null,
     installedMap: {},
     installedLoadedAt: 0,
     installedLoading: false,
+    fixGamesLoading: false,
+    fixGamesPromise: null,
     nameCache: {},
     apis: null,
+    apisLoading: false,
     apiForm: null,
     apiOrder: null,
     draggingApiId: "",
+    pendingApiDrop: null,
+    draggingPointerId: null,
+    libraryQuery: "",
     installedPromise: null,
     backup: null,
     fixResults: null,
@@ -190,6 +198,26 @@
     return ["skyapi", "morrenus", "sushi"];
   }
 
+  function readStoredApiOrder() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(API_ORDER_STORAGE_KEY) || "[]");
+      return Array.isArray(parsed) && parsed.length ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeStoredApiOrder(order) {
+    if (!Array.isArray(order) || !order.length) {
+      return;
+    }
+    try {
+      localStorage.setItem(API_ORDER_STORAGE_KEY, JSON.stringify(order));
+    } catch (_) {
+      // Steam WebView storage can be unavailable in rare contexts; backend persistence remains authoritative.
+    }
+  }
+
   function orderApis(apis, order) {
     var list = (apis || []).slice();
     var preferredOrder = Array.isArray(order) && order.length ? order : defaultApiOrder();
@@ -230,6 +258,32 @@
     order.splice(to, 0, dragId);
     state.apiOrder = order;
     return true;
+  }
+
+  function apiListFromData(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function isValidApi(api) {
+    if (!api || typeof api !== "object") {
+      return false;
+    }
+    var id = String(api.id || api.Id || "").trim();
+    var name = String(api.name || api.Name || "").trim();
+    var url = String(api.urlTemplate || api.UrlTemplate || "").trim();
+    return !!(id && name && url && url.indexOf("<appid>") >= 0);
+  }
+
+  function collectApiOrderFromDom(panel) {
+    var rows = panel ? panel.querySelectorAll(".skytools-api-draggable[data-api-id]") : [];
+    var order = [];
+    for (var i = 0; i < rows.length; i += 1) {
+      var id = rows[i].getAttribute("data-api-id") || "";
+      if (id) {
+        order.push(id);
+      }
+    }
+    return order;
   }
 
   function updateNameCacheFromInstalled(result) {
@@ -303,8 +357,11 @@
     updateBusyState();
   }
 
-  function clearBusy() {
+  function clearBusy(title, detail, kind) {
     state.busy = false;
+    if (title !== false) {
+      setActivity(kind || "idle", title || "Pronto", detail || "Aguardando uma acao.");
+    }
     updateBusyState();
   }
 
@@ -376,6 +433,29 @@
       return result;
     });
     return state.installedPromise;
+  }
+
+  function refreshFixGames(force) {
+    if (state.fixGamesLoading) {
+      return state.fixGamesPromise || Promise.resolve(state.fixGames);
+    }
+    if (!force && state.fixGames) {
+      return Promise.resolve(state.fixGames);
+    }
+    state.fixGamesLoading = true;
+    state.fixGamesPromise = call("SkyToolsSteamInstalled", {}).then(function (result) {
+      state.fixGames = result;
+      return result;
+    }, function (error) {
+      log("SkyToolsSteamInstalled: " + (error && error.message ? error.message : String(error)));
+      state.fixGames = { success: false, error: error && error.message ? error.message : String(error) };
+      return state.fixGames;
+    }).then(function (result) {
+      state.fixGamesLoading = false;
+      state.fixGamesPromise = null;
+      return result;
+    });
+    return state.fixGamesPromise;
   }
 
   function ensureGameButton() {
@@ -493,24 +573,31 @@
 
   function renderInstalledList() {
     var list = gameArray(state.installed);
+    var query = String(state.libraryQuery || "").toLowerCase();
     if (!list || !list.length) {
       return '<div class="skytools-empty">Nenhum jogo carregado ainda.</div>';
     }
 
-    return list.map(function (game) {
+    var rows = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var game = list[i];
       var appid = gameAppId(game);
       var name = displayGameName(game);
+      if (query && String(name).toLowerCase().indexOf(query) < 0 && String(appid).indexOf(query) < 0) {
+        continue;
+      }
       var dlcCount = Number(game.dlcCount || game.DlcCount || game.dlc_count || 0);
       var pill = dlcCount === 1 ? "1 DLC" : dlcCount > 1 ? (dlcCount + " DLCs") : "0 DLCs";
-      return [
+      rows.push([
         '<div class="skytools-list-row">',
         '  <div class="skytools-row-icon">' + icon("library") + '</div>',
         '  <div class="skytools-row-main" title="' + escapeHtml(name) + '"><strong>' + escapeHtml(name) + '</strong><span>AppID ' + escapeHtml(appid) + '</span></div>',
         '  <span class="skytools-pill">' + escapeHtml(pill) + '</span>',
         '  <button type="button" class="skytools-row-action" title="Remover da Steam" data-action="remove-game" data-appid="' + escapeHtml(appid) + '" data-name="' + escapeHtml(name) + '">' + icon("trash") + '</button>',
         '</div>'
-      ].join("");
-    }).join("");
+      ].join(""));
+    }
+    return rows.length ? rows.join("") : '<div class="skytools-empty">Nenhum jogo encontrado com esse filtro.</div>';
   }
 
   function renderApisList() {
@@ -519,9 +606,9 @@
       return '<div class="skytools-empty">Carregando APIs...</div>';
     }
 
-    var builtIn = data.builtIn || [];
-    var custom = data.custom || [];
-    var allApis = orderApis(builtIn.concat(custom), data.apiOrder || data.ApiOrder || state.apiOrder || defaultApiOrder());
+    var builtIn = apiListFromData(data.builtIn).filter(isValidApi);
+    var custom = apiListFromData(data.custom).filter(isValidApi);
+    var allApis = orderApis(builtIn.concat(custom), state.apiOrder || readStoredApiOrder() || data.apiOrder || data.ApiOrder || defaultApiOrder());
     state.apiOrder = allApis.map(function (api) { return apiId(api); }).filter(Boolean);
 
     var apiRows = allApis.map(function (api) {
@@ -535,8 +622,8 @@
       var unavailable = api.unavailableCode || api.UnavailableCode || 404;
       var detail = (enabled ? "Ativa" : "Desativada") + " · " + (nativeApi ? "API padrao" : "API personalizada") + " · HTTP " + success + "/" + unavailable + (useProxy ? " · proxy" : "");
       return [
-        '<div class="skytools-custom-api-row skytools-api-draggable ' + (state.apiForm && state.apiForm.id === id ? "selected" : "") + '" data-api-id="' + escapeHtml(id) + '">',
-        '  <div class="skytools-row-icon">' + icon("api") + '</div>',
+        '<div class="skytools-custom-api-row skytools-api-draggable ' + (state.apiForm && state.apiForm.id === id ? "selected" : "") + '" draggable="true" data-api-id="' + escapeHtml(id) + '">',
+        '  <span class="skytools-drag-handle" title="Arrastar para ordenar">' + icon("api") + '</span>',
         '  <div class="skytools-row-main"><strong>' + escapeHtml(name) + '</strong><span>' + escapeHtml(url || "URL nao configurada") + '</span><small>' + escapeHtml(detail) + '</small></div>',
         '  <div class="skytools-row-actions">',
         '    <button type="button" class="skytools-row-action" title="Editar API" data-action="api-edit" data-api-id="' + escapeHtml(id) + '">' + icon("pencil") + '</button>',
@@ -592,25 +679,27 @@
   }
 
   function sourceUrl(source) {
-    return source.downloadUrl || source.sourceUrl || source.url || "";
+    source = source || {};
+    return source.downloadUrl || source.DownloadUrl || source.sourceUrl || source.SourceUrl || source.url || source.Url || source.href || source.link || "";
+  }
+
+  function looksLikeArchive(value) {
+    return /\.(zip|rar|7z)(?:\?|$)/i.test(String(value || ""));
   }
 
   function renderFixResults() {
     var sources = sourceArray(state.fixResults);
     if (!sources.length) {
-      return '<div class="skytools-empty">Nenhuma correcao carregada.</div>';
+      return '<div class="skytools-empty">Nenhuma correcao Ryuu carregada.</div>';
     }
     return sources.map(function (source, index) {
       var title = source.name || source.title || source.provider || "Fonte";
       var detail = [source.provider, source.type, source.size].filter(Boolean).join(" · ");
       var url = sourceUrl(source);
-      var provider = String(source.provider || "").toLowerCase();
-      var action = source.action || (provider.indexOf("online") >= 0 ? "copy" : provider.indexOf("ryuu") >= 0 ? "apply" : "open");
-      var actionButton = action === "copy"
-        ? '  <button type="button" class="skytools-row-action" title="Copiar link" data-action="fix-copy" data-url="' + escapeHtml(url) + '">' + icon("online") + '</button>'
-        : action === "apply"
-          ? '  <button type="button" class="skytools-row-action" title="Aplicar na pasta do jogo" data-action="fix-prepare" data-source-index="' + index + '">' + icon("check") + '</button>'
-          : '  <button type="button" class="skytools-row-action" title="Abrir fonte" data-action="fix-open" data-url="' + escapeHtml(url) + '">' + icon("online") + '</button>';
+      var canApply = looksLikeArchive(url) || looksLikeArchive(title);
+      var actionButton = canApply
+        ? '  <button type="button" class="skytools-row-action" title="Aplicar na pasta do jogo" data-action="fix-prepare" data-source-index="' + index + '">' + icon("check") + '</button>'
+        : '  <button type="button" class="skytools-row-action" title="Pacote nao suportado" disabled>' + icon("error") + '</button>';
       return [
         '<div class="skytools-list-row">',
         '  <div class="skytools-row-icon">' + icon("fixes") + '</div>',
@@ -622,10 +711,14 @@
   }
 
   function renderFixGamePicker() {
-    var list = gameArray(state.installed);
+    var list = gameArray(state.fixGames);
     var query = String(state.fixQuery || "").toLowerCase();
     if (!list.length) {
-      return '<div class="skytools-empty">Carregando jogos instalados...</div>';
+      if (state.fixGamesLoading) {
+        return '<div class="skytools-empty">Carregando jogos instalados...</div>';
+      }
+      var error = state.fixGames && state.fixGames.error ? String(state.fixGames.error) : "";
+      return '<div class="skytools-empty">' + escapeHtml(error || "Nenhum jogo instalado encontrado nas bibliotecas Steam.") + '</div>';
     }
 
     var rows = [];
@@ -679,7 +772,8 @@
     if (tab === "biblioteca") {
       return [
         '<div class="skytools-section-head"><strong>Jogos instalados</strong><button data-action="installed" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
-        '<div class="skytools-list">' + renderInstalledList() + '</div>'
+        '<div class="skytools-field"><label>Buscar na biblioteca</label><input class="skytools-input" data-field="librarySearch" placeholder="Digite nome ou AppID" value="' + escapeHtml(state.libraryQuery || "") + '"></div>',
+        '<div class="skytools-list" data-role="installed-list">' + renderInstalledList() + '</div>'
       ].join("");
     }
 
@@ -687,7 +781,7 @@
       return [
         '<div class="skytools-section-head"><strong>Correcoes para jogo</strong><button data-action="refresh-fix-games" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
         '<div class="skytools-field"><label>Buscar jogo instalado</label><input class="skytools-input" data-field="fixSearch" placeholder="Digite nome ou AppID" value="' + escapeHtml(state.fixQuery || "") + '"></div>',
-        '<div class="skytools-list">' + renderFixGamePicker() + '</div>',
+        '<div class="skytools-list" data-role="fix-game-list">' + renderFixGamePicker() + '</div>',
         '<div class="skytools-section-head"><strong>' + escapeHtml(state.selectedFixGame ? ("Resultados para " + state.selectedFixGame.name) : "Resultados") + '</strong></div>',
         '<div class="skytools-list">' + renderFixResults() + '</div>'
       ].join("");
@@ -964,13 +1058,37 @@
     return null;
   }
 
-  function saveApiOrder() {
-    if (!state.apiOrder || !state.apiOrder.length) {
+  function setApiOrderOnState(order) {
+    var data = normalizeData(state.apis);
+    if (data) {
+      data.apiOrder = order.slice();
+      data.ApiOrder = order.slice();
+    }
+  }
+
+  function saveApiOrder(order) {
+    var nextOrder = Array.isArray(order) && order.length ? order.slice() : (state.apiOrder || []).slice();
+    if (!nextOrder.length) {
       return;
     }
+    state.apiOrder = nextOrder;
+    setApiOrderOnState(nextOrder);
     setActivity("busy", "Salvando ordem", "Atualizando prioridade das APIs...");
-    call("SkyToolsSaveApiSettings", { apiOrder: state.apiOrder }).then(function (result) {
+    log("SkyTools API order: " + nextOrder.join(","));
+    call("SkyToolsSaveApiSettings", {
+      apiOrder: nextOrder,
+      ApiOrder: nextOrder,
+      apiOrderText: nextOrder.join(","),
+      apiOrderJson: JSON.stringify(nextOrder)
+    }).then(function (result) {
+      if (result && result.success === false) {
+        renderResult(result, "Falha ao salvar ordem");
+        return;
+      }
       state.apis = result;
+      state.apiOrder = nextOrder;
+      writeStoredApiOrder(nextOrder);
+      setApiOrderOnState(nextOrder);
       setActivity("success", "Ordem salva", "A prioridade das APIs foi atualizada.");
       renderPanelBody();
     }, function (error) {
@@ -1005,7 +1123,7 @@
   }
 
   function loadFixSources(action, title, payload) {
-    return runAction(title, action === "online" ? "SkyToolsOnlineFix" : action === "denuvo" ? "SkyToolsDenuvoFix" : "SkyToolsFixSources", payload, function (result) {
+    return runAction(title, "SkyToolsFixSources", payload, function (result) {
       state.fixResults = result;
       state.activeTab = "correcoes";
     });
@@ -1047,24 +1165,36 @@
   }
 
   function ensureTabData(tab) {
-    if ((tab === "biblioteca" || tab === "correcoes") && !state.installed && !state.installedLoading) {
+    if (tab === "biblioteca" && !state.installed && !state.installedLoading) {
       setBusy("Carregando biblioteca", "Buscando jogos adicionados.");
       refreshInstalledCache(true).then(function (result) {
         clearBusy();
         state.installed = result;
         updateNameCacheFromInstalled(result);
-        if (tab === "biblioteca") {
-          renderResult(result, "Biblioteca carregada");
-        } else {
-          renderPanelBody();
-        }
+        renderResult(result, "Biblioteca carregada");
       });
       return;
     }
 
-    if (tab === "apis" && !state.apis) {
+    if (tab === "correcoes" && !state.fixGames && !state.fixGamesLoading) {
+      setBusy("Carregando jogos instalados", "Lendo appmanifests da Steam.");
+      refreshFixGames(true).then(function (result) {
+        var count = gameArray(result).length;
+        clearBusy("Jogos instalados carregados", count + " jogo(s) encontrados.", "success");
+        renderPanelBody();
+      }, function (error) {
+        clearBusy(false);
+        renderResult({ success: false, error: error && error.message ? error.message : String(error) }, "Falha ao carregar jogos instalados");
+      });
+      return;
+    }
+
+    if (tab === "apis" && !state.apisLoading) {
+      state.apisLoading = true;
       runAction("Carregando APIs", "SkyToolsApis", {}, function (result) {
         state.apis = result;
+      }).then(function () {
+        state.apisLoading = false;
       });
     }
   }
@@ -1101,9 +1231,8 @@
         ensureTabData("correcoes");
       }
       if (action === "refresh-fix-games") {
-        runAction("Carregando jogos", "SkyToolsInstalled", {}, function (result) {
-          state.installed = result;
-          updateNameCacheFromInstalled(result);
+        runAction("Carregando jogos instalados", "SkyToolsSteamInstalled", {}, function (result) {
+          state.fixGames = result;
           state.activeTab = "correcoes";
         });
       }
@@ -1142,8 +1271,8 @@
       if (action === "api-save") runAction("Salvando API", "SkyToolsSaveApi", currentApiForm(panel), function () { state.apiForm = null; state.apis = null; return call("SkyToolsApis", {}).then(function (result) { state.apis = result; }); });
       if (action === "api-save-settings") runAction("Salvando preferencias", "SkyToolsSaveApiSettings", { apiOrder: state.apiOrder || [] }, function (result) { state.apis = result; });
       if (action === "fixes") loadFixSources("fixes", "Buscando correcoes", payload);
-      if (action === "online") loadFixSources("online", "Buscando correcao online", payload);
-      if (action === "denuvo") loadFixSources("denuvo", "Buscando correcao Denuvo", payload);
+      if (action === "online") loadFixSources("online", "Buscando correcoes Ryuu", payload);
+      if (action === "denuvo") loadFixSources("denuvo", "Buscando correcoes Ryuu", payload);
       if (action === "fix-open") openExternal(button.getAttribute("data-url"));
       if (action === "fix-copy") copyText(button.getAttribute("data-url"));
       if (action === "fix-game") {
@@ -1152,12 +1281,24 @@
           name: button.getAttribute("data-name") || "",
           gamePath: button.getAttribute("data-game-path") || ""
         };
-        loadFixSources("fixes", "Buscando correcoes", state.selectedFixGame);
+        loadFixSources("fixes", "Buscando correcoes Ryuu", state.selectedFixGame);
       }
       if (action === "fix-prepare") {
         var source = sourceArray(state.fixResults)[Number(button.getAttribute("data-source-index") || 0)];
         var selected = state.selectedFixGame || payload;
-        runAction("Aplicando Ryuu", "SkyToolsApplyFix", { appid: selected.appid, name: selected.name, gamePath: selected.gamePath || "", source: source || {} }, function (result) {
+        var sourceJson = JSON.stringify(source || {});
+        runAction("Aplicando Ryuu", "SkyToolsApplyFix", {
+          appid: selected.appid,
+          name: selected.name,
+          gamePath: selected.gamePath || "",
+          source: source || {},
+          sourceJson: sourceJson,
+          downloadUrl: sourceUrl(source || {}),
+          sourceName: source && (source.name || source.title) || "",
+          sourceType: source && source.type || "",
+          provider: source && source.provider || "",
+          size: source && source.size || ""
+        }, function (result) {
           var data = normalizeData(result) || {};
           if (data.action === "copy" && data.url) {
             copyText(data.url);
@@ -1184,68 +1325,118 @@
     panel.addEventListener("input", function (event) {
       if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "fixSearch") {
         state.fixQuery = event.target.value || "";
-        renderPanelBody();
+        var fixList = panel.querySelector('[data-role="fix-game-list"]');
+        if (fixList) {
+          fixList.innerHTML = renderFixGamePicker();
+        }
       }
-    });
-
-    panel.addEventListener("pointerdown", function (event) {
-      if (event.target && event.target.closest && event.target.closest("button,input,select,textarea")) {
-        return;
-      }
-      var row = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
-      if (!row) {
-        return;
-      }
-      state.draggingApiId = row.getAttribute("data-api-id") || "";
-      row.classList.add("dragging");
-      try {
-        row.setPointerCapture(event.pointerId);
-      } catch (_) {}
-    });
-
-    panel.addEventListener("pointerover", function (event) {
-      if (!state.draggingApiId) {
-        return;
-      }
-      var row = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
-      if (!row) {
-        return;
-      }
-      var targetId = row.getAttribute("data-api-id") || "";
-      var rect = row.getBoundingClientRect();
-      var afterTarget = event.clientY > rect.top + (rect.height / 2);
-      if (targetId && targetId !== state.draggingApiId && reorderApiOrder(state.draggingApiId, targetId, afterTarget)) {
-        var dragged = panel.querySelector('.skytools-api-draggable[data-api-id="' + state.draggingApiId + '"]');
-        if (dragged && row.parentNode) {
-          row.parentNode.insertBefore(dragged, afterTarget ? row.nextSibling : row);
+      if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "librarySearch") {
+        state.libraryQuery = event.target.value || "";
+        var installedList = panel.querySelector('[data-role="installed-list"]');
+        if (installedList) {
+          installedList.innerHTML = renderInstalledList();
         }
       }
     });
 
-    panel.addEventListener("pointerup", function () {
-      if (!state.draggingApiId) {
+    panel.addEventListener("mousedown", function (event) {
+      if (event.target && event.target.closest && event.target.closest(".skytools-row-actions,button,input,textarea,select")) {
         return;
       }
-      var rows = panel.querySelectorAll(".skytools-api-draggable.dragging");
-      for (var i = 0; i < rows.length; i += 1) {
-        rows[i].classList.remove("dragging");
+      var row = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
+      if (!row) {
+        return;
       }
-      state.draggingApiId = "";
-      saveApiOrder();
+      row.draggable = true;
     });
 
-    panel.addEventListener("pointercancel", function () {
+    panel.addEventListener("mouseup", function (event) {
+      var row = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
+      if (row) {
+        row.draggable = true;
+      }
+    });
+
+    panel.addEventListener("dragstart", function (event) {
+      var row = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
+      if (!row || (event.target && event.target.closest && event.target.closest(".skytools-row-actions,button,input,textarea,select"))) {
+        return;
+      }
+      row.draggable = true;
+      state.draggingApiId = row.getAttribute("data-api-id") || "";
+      state.pendingApiDrop = null;
+      row.classList.add("dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", state.draggingApiId);
+      }
+    });
+
+    panel.addEventListener("dragover", function (event) {
+      var target = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
+      var dragging = panel.querySelector(".skytools-api-draggable.dragging");
+      if (!target || !dragging || target === dragging) {
+        return;
+      }
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+      var rect = target.getBoundingClientRect();
+      var afterTarget = event.clientY > rect.top + (rect.height / 2);
+      state.pendingApiDrop = {
+        targetId: target.getAttribute("data-api-id") || "",
+        afterTarget: afterTarget
+      };
+      target.parentNode.insertBefore(dragging, afterTarget ? target.nextSibling : target);
+    });
+
+    panel.addEventListener("drop", function (event) {
+      var dragging = panel.querySelector(".skytools-api-draggable.dragging");
+      if (dragging) {
+        event.preventDefault();
+        var target = event.target && event.target.closest ? event.target.closest(".skytools-api-draggable") : null;
+        if (target && target !== dragging && target.parentNode) {
+          var rect = target.getBoundingClientRect();
+          var afterTarget = event.clientY > rect.top + (rect.height / 2);
+          state.pendingApiDrop = {
+            targetId: target.getAttribute("data-api-id") || "",
+            afterTarget: afterTarget
+          };
+          target.parentNode.insertBefore(dragging, afterTarget ? target.nextSibling : target);
+        }
+      }
+    });
+
+    panel.addEventListener("dragend", function () {
+      var dragging = panel.querySelector(".skytools-api-draggable.dragging");
+      if (!dragging) {
+        return;
+      }
+      dragging.classList.remove("dragging");
+      dragging.draggable = true;
+      var order = collectApiOrderFromDom(panel);
+      if (state.pendingApiDrop && state.pendingApiDrop.targetId) {
+        if (reorderApiOrder(state.draggingApiId, state.pendingApiDrop.targetId, state.pendingApiDrop.afterTarget === true)) {
+          order = (state.apiOrder || []).slice();
+        }
+      }
       state.draggingApiId = "";
-      renderPanelBody();
+      state.pendingApiDrop = null;
+      state.draggingPointerId = null;
+      saveApiOrder(order);
     });
 
     renderPanelBody();
     setActivity("busy", "Carregando status", "Sincronizando com o backend...");
     (state.status ? Promise.resolve(state.status) : loadStatus(true)).then(function () {
-      if (!state.installed && (state.activeTab === "biblioteca" || state.activeTab === "correcoes")) {
+      if (!state.installed && state.activeTab === "biblioteca") {
         return refreshInstalledCache(false);
       }
-      return state.installed;
+      if (!state.fixGames && state.activeTab === "correcoes") {
+        return refreshFixGames(false);
+      }
+      return state.activeTab === "correcoes" ? state.fixGames : state.installed;
     }).then(function () {
       renderPanelBody();
       if (!state.busy) {
@@ -1270,6 +1461,7 @@
 
   function boot() {
     log("SkyTools browser script loaded: " + location.href);
+    state.lastUrl = location.href;
     tick();
     window.setInterval(function () {
       if (location.href !== state.lastUrl) {

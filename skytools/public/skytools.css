@@ -645,13 +645,31 @@
 }
 
 .skytools-api-draggable {
-  cursor: move;
   user-select: none;
-  touch-action: none;
 }
 
 .skytools-api-draggable.dragging {
   opacity: 0.58;
+}
+
+.skytools-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 7px;
+  color: #ffd29a;
+  background: rgba(255, 166, 77, 0.12);
+  cursor: grab;
+  touch-action: none;
+  font-size: 16px;
+}
+
+.skytools-drag-handle:active {
+  cursor: grabbing;
 }
 
 .skytools-row-actions {

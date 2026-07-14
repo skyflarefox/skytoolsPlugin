@@ -111,6 +111,10 @@ local function installed_helper_path()
     return join_path(backend_path(), "skytools_installed.js")
 end
 
+local function steam_installed_helper_path()
+    return join_path(backend_path(), "skytools_steam_installed.js")
+end
+
 local function fixes_helper_path()
     return join_path(backend_path(), "skytools_fixes.js")
 end
@@ -123,6 +127,29 @@ local function is_file(path)
     local file = io.open(path, "rb")
     if file ~= nil then
         file:close()
+        return true
+    end
+    return false
+end
+
+local function path_exists(path)
+    path = tostring(path or ""):match("^%s*(.-)%s*$") or ""
+    if path == "" then
+        return false
+    end
+    if fs_ok and fs ~= nil and fs.exists ~= nil then
+        local ok, exists = pcall(fs.exists, path)
+        if ok then
+            return exists == true
+        end
+    end
+    if fs_ok and fs ~= nil and fs.list ~= nil then
+        local ok, entries = pcall(fs.list, path)
+        if ok and type(entries) == "table" then
+            return true
+        end
+    end
+    if is_file(path) then
         return true
     end
     return false
@@ -144,7 +171,20 @@ local function mkdirs(path)
 
     if fs_ok and fs ~= nil and fs.create_directories ~= nil then
         local ok = pcall(fs.create_directories, path)
-        return ok
+        if ok then
+            return true
+        end
+    end
+
+    local command = "cmd.exe /c mkdir " .. quote_arg(path) .. " >nul 2>nul"
+    local ok = pcall(function()
+        if utils ~= nil and utils.exec ~= nil then
+            return utils.exec(command)
+        end
+        return os.execute(command)
+    end)
+    if ok then
+        return true
     end
 
     return false
@@ -654,15 +694,20 @@ local function trim(value)
     return tostring(value or ""):match("^%s*(.-)%s*$") or ""
 end
 
-local function get_prop(source, upper, lower, fallback)
+local function get_prop(source, ...)
+    local count = select("#", ...)
+    local fallback = nil
+    if count > 0 then
+        fallback = select(count, ...)
+    end
     if type(source) ~= "table" then
         return fallback
     end
-    if source[upper] ~= nil then
-        return source[upper]
-    end
-    if source[lower] ~= nil then
-        return source[lower]
+    for index = 1, count - 1 do
+        local key = select(index, ...)
+        if key ~= nil and source[key] ~= nil then
+            return source[key]
+        end
     end
     return fallback
 end
@@ -674,6 +719,16 @@ local function get_first_prop(source, keys, fallback)
     for _, key in ipairs(keys or {}) do
         if source[key] ~= nil then
             return source[key]
+        end
+    end
+    for _, key in ipairs(keys or {}) do
+        local wanted = tostring(key or ""):lower()
+        if wanted ~= "" then
+            for actual, value in pairs(source) do
+                if tostring(actual or ""):lower() == wanted then
+                    return value
+                end
+            end
         end
     end
     return fallback
@@ -711,6 +766,12 @@ local function normalize_payload(payload)
     end
     if type(payload.data) == "table" or type(payload.data) == "string" then
         return normalize_payload(payload.data)
+    end
+    if type(payload.params) == "table" or type(payload.params) == "string" then
+        return normalize_payload(payload.params)
+    end
+    if type(payload.args) == "table" or type(payload.args) == "string" then
+        return normalize_payload(payload.args)
     end
     if type(payload[1]) == "table" or type(payload[1]) == "string" or type(payload[1]) == "number" then
         local nested = normalize_payload(payload[1])
@@ -835,22 +896,203 @@ local function steam_library_paths()
     return libraries
 end
 
-local function steam_game_install_path(appid)
+local function steam_game_metadata(appid)
     appid = tostring(appid or ""):match("(%d+)") or ""
     if appid == "" then
-        return ""
+        return nil
     end
     for _, steamapps in ipairs(steam_library_paths()) do
         local manifest = join_path(steamapps, "appmanifest_" .. appid .. ".acf")
         local text = read_file(manifest)
         if text ~= nil then
-            local installdir = text:match('"installdir"%s+"([^"]+)"')
-            if installdir ~= nil and trim(installdir) ~= "" then
-                return join_path(join_path(steamapps, "common"), installdir:gsub("\\\\", "\\"))
+            local function value(key)
+                local found = text:match('"' .. tostring(key or "") .. '"%s+"([^"]*)"')
+                return found ~= nil and found:gsub("\\\\", "\\") or ""
+            end
+            local manifest_appid = value("appid")
+            local installdir = value("installdir")
+            local name = value("name")
+            local game_path = ""
+            if trim(installdir) ~= "" then
+                game_path = join_path(join_path(steamapps, "common"), installdir)
+            end
+            return {
+                appId = tonumber(manifest_appid ~= "" and manifest_appid or appid) or appid,
+                name = trim(name),
+                gameName = trim(name),
+                manifestPath = manifest,
+                fullPath = manifest,
+                installDir = installdir,
+                gamePath = game_path,
+                installPath = game_path,
+                steamapps = steamapps
+            }
+        end
+    end
+    return nil
+end
+
+local function steam_game_install_path(appid)
+    local metadata = steam_game_metadata(appid)
+    return metadata ~= nil and trim(metadata.gamePath) or ""
+end
+
+local function acf_value(text, key)
+    local pattern = '"' .. tostring(key or "") .. '"%s+"([^"]*)"'
+    local value = tostring(text or ""):match(pattern)
+    if value == nil then
+        return ""
+    end
+    return value:gsub("\\\\", "\\")
+end
+
+local function list_manifest_files(steamapps)
+    local files = {}
+    local directory = trim(steamapps)
+    if directory == "" or not fs_ok or fs == nil or fs.list == nil then
+        return files
+    end
+
+    local ok, entries = pcall(fs.list, directory)
+    if not ok or type(entries) ~= "table" then
+        return files
+    end
+
+    for _, entry in ipairs(entries) do
+        local name = ""
+        local path = ""
+        if type(entry) == "table" then
+            name = trim(entry.name or entry.filename or "")
+            path = trim(entry.path or entry.fullPath or "")
+        else
+            path = trim(entry)
+            name = path:match("[^\\/]+$") or path
+        end
+        if name == "" and path ~= "" then
+            name = path:match("[^\\/]+$") or ""
+        end
+        if name:match("^appmanifest_%d+%.acf$") ~= nil then
+            table.insert(files, path ~= "" and path or join_path(directory, name))
+        end
+    end
+    return files
+end
+
+local function scan_steam_installed_with_helper(libraries)
+    local helper = steam_installed_helper_path()
+    if not is_file(helper) then
+        return nil
+    end
+
+    local result_path = join_path(data_root(), "skytools-job-steam-installed.json")
+    delete_file(result_path)
+
+    local command = {
+        "cscript.exe",
+        "//Nologo",
+        quote_arg(helper),
+        quote_arg(result_path)
+    }
+    for _, steamapps in ipairs(libraries or {}) do
+        if trim(steamapps) ~= "" then
+            table.insert(command, quote_arg(steamapps))
+        end
+    end
+
+    local ok = pcall(function()
+        if utils ~= nil and utils.exec ~= nil then
+            return utils.exec(table.concat(command, " "))
+        end
+        return os.execute(table.concat(command, " "))
+    end)
+    if not ok or not is_file(result_path) then
+        return nil
+    end
+
+    local result = read_json(result_path, nil)
+    if type(result) == "table" and result.success == true then
+        local data = get_prop(result, "data", "games", {})
+        if type(data) == "table" then
+            return data
+        end
+    end
+    return nil
+end
+
+local function steam_installed_direct()
+    local cached = cache_get("steam-installed", 10)
+    if cached ~= nil then
+        return cached
+    end
+
+    local records = read_json(join_path(data_root(), "fix-actions.json"), {})
+    local applied = {}
+    if type(records) == "table" then
+        for _, record in pairs(records) do
+            if type(record) == "table" then
+                local appid = tostring(get_prop(record, "appId", "appid", "AppId", ""))
+                if appid ~= "" then
+                    applied[appid] = true
+                end
             end
         end
     end
-    return ""
+
+    local libraries = steam_library_paths()
+    local items = {}
+    local seen = {}
+    local helper_items = scan_steam_installed_with_helper(libraries)
+    if type(helper_items) == "table" then
+        for _, item in ipairs(helper_items) do
+            if type(item) == "table" then
+                local appid = tostring(get_prop(item, "appId", "appid", "AppId", ""))
+                if appid ~= "" and seen[appid] ~= true then
+                    seen[appid] = true
+                    item.hasAppliedFix = applied[appid] == true
+                    table.insert(items, item)
+                end
+            end
+        end
+    end
+
+    if #items == 0 then
+        for _, steamapps in ipairs(libraries) do
+            for _, manifest in ipairs(list_manifest_files(steamapps)) do
+                local text = read_file(manifest)
+                if text ~= nil then
+                    local appid = manifest:match("appmanifest_(%d+)%.acf$") or acf_value(text, "appid")
+                    local name = acf_value(text, "name")
+                    local installdir = acf_value(text, "installdir")
+                    if appid ~= "" and installdir ~= "" and seen[appid] ~= true then
+                        local game_path = join_path(join_path(steamapps, "common"), installdir)
+                        if path_exists(game_path) then
+                            seen[appid] = true
+                            table.insert(items, {
+                                appId = tonumber(appid) or appid,
+                                appid = tonumber(appid) or appid,
+                                gameName = trim(name) ~= "" and trim(name) or ("AppID " .. appid),
+                                name = trim(name) ~= "" and trim(name) or ("AppID " .. appid),
+                                fileName = "appmanifest_" .. appid .. ".acf",
+                                fullPath = manifest,
+                                manifestPath = manifest,
+                                gamePath = game_path,
+                                installPath = game_path,
+                                isDisabled = false,
+                                isSteamInstalled = true,
+                                hasAppliedFix = applied[appid] == true,
+                                imageUrl = "https://cdn.akamai.steamstatic.com/steam/apps/" .. appid .. "/header.jpg"
+                            })
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    table.sort(items, function(left, right)
+        return trim(left.gameName):lower() < trim(right.gameName):lower()
+    end)
+    return cache_set("steam-installed", items, 10)
 end
 
 local function count_dlcs_from_script(path, appid)
@@ -1356,11 +1598,18 @@ local function installed_direct()
         end
     end
 
+    local names_dirty = false
     for _, script in ipairs(scripts) do
         script.appId = tonumber(script.appId or script.appid or 0) or 0
         script.appid = script.appId
         local id = tostring(script.appId)
-        script.gameName = record_names[id] or names[id] or "AppID " .. id
+        local metadata = steam_game_metadata(script.appId)
+        local manifest_name = metadata ~= nil and trim(metadata.gameName or metadata.name) or ""
+        if trim(names[id]) == "" and manifest_name ~= "" and not is_placeholder_game_name(manifest_name, id) then
+            names[id] = manifest_name
+            names_dirty = true
+        end
+        script.gameName = record_names[id] or names[id] or (manifest_name ~= "" and manifest_name or "AppID " .. id)
         script.name = script.gameName
         script.dlcCount = tonumber(script.dlcCount or script.DlcCount or script.dlc_count or 0) or 0
         if script.dlcCount <= 0 and trim(script.fullPath) ~= "" then
@@ -1371,9 +1620,13 @@ local function installed_direct()
         script.hasAvailableFix = false
         script.hasAppliedFix = false
         script.isSteamInstalled = false
-        script.gamePath = steam_game_install_path(script.appId)
+        script.gamePath = metadata ~= nil and trim(metadata.gamePath) or steam_game_install_path(script.appId)
         script.metadataLoaded = false
         script.metadataLoading = false
+    end
+
+    if names_dirty then
+        save_name_cache_map(names)
     end
 
     if #scripts > 0 then
@@ -1432,13 +1685,57 @@ local function status_direct(payload)
     }
 end
 
+local clean_api_order
+
+local function collect_api_order_values(order)
+    local values = {}
+    if type(order) == "string" then
+        local text = trim(order)
+        if text:sub(1, 1) == "[" or text:sub(1, 1) == "{" then
+            local decoded = json_decode(text, nil)
+            if type(decoded) == "table" then
+                return collect_api_order_values(decoded)
+            end
+        end
+        for id in text:gmatch("[^,%s]+") do
+            table.insert(values, id)
+        end
+        return values
+    end
+
+    if type(order) ~= "table" then
+        return values
+    end
+
+    local indexed = {}
+    for key, value in pairs(order) do
+        local index = tonumber(key)
+        if index ~= nil then
+            table.insert(indexed, { index = index, value = value })
+        end
+    end
+    table.sort(indexed, function(left, right)
+        return left.index < right.index
+    end)
+    for _, item in ipairs(indexed) do
+        table.insert(values, item.value)
+    end
+
+    if #values == 0 then
+        for _, value in ipairs(order) do
+            table.insert(values, value)
+        end
+    end
+    return values
+end
+
 local function apis_direct()
     local settings = load_settings()
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
     local native_overrides = get_prop(settings, "NativeManifestApis", "nativeManifestApis", {})
     local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
     local api_order = get_prop(settings, "ApiOrder", "apiOrder", {})
-    if type(custom) ~= "table" then
+    if type(custom) ~= "table" or not is_array(custom) then
         custom = {}
     end
     if type(native_overrides) ~= "table" then
@@ -1450,6 +1747,19 @@ local function apis_direct()
     if type(api_order) ~= "table" then
         api_order = DEFAULT_API_ORDER
     end
+
+    local clean_custom = {}
+    for _, item in ipairs(custom) do
+        if type(item) == "table" then
+            local id = trim(get_prop(item, "id", "Id", ""))
+            local name = trim(get_prop(item, "name", "Name", ""))
+            local url = trim(get_prop(item, "urlTemplate", "UrlTemplate", ""))
+            if id ~= "" and name ~= "" and url ~= "" and url:find("<appid>", 1, true) ~= nil then
+                table.insert(clean_custom, item)
+            end
+        end
+    end
+    custom = clean_custom
 
     local disabled = {}
     for _, id in ipairs(disabled_api_ids) do
@@ -1484,7 +1794,7 @@ local function apis_direct()
     return {
         preferred = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
         morrenusApiKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")),
-        apiOrder = api_order,
+        apiOrder = clean_api_order(api_order, custom, nil),
         builtIn = {
             native_api("skyapi", "SkyAPI", false, "https://raw.githubusercontent.com/skyflarefox/Skyapi/refs/heads/main/<appid>.zip"),
             native_api("morrenus", "Morrenus", true, "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>"),
@@ -1494,7 +1804,7 @@ local function apis_direct()
     }
 end
 
-local function clean_api_order(order, custom, include_id)
+function clean_api_order(order, custom, include_id)
     local allowed = { skyapi = true, morrenus = true, sushi = true }
     for _, item in ipairs(custom or {}) do
         if type(item) == "table" then
@@ -1519,10 +1829,8 @@ local function clean_api_order(order, custom, include_id)
         end
     end
 
-    if type(order) == "table" then
-        for _, id in ipairs(order) do
-            add(id)
-        end
+    for _, id in ipairs(collect_api_order_values(order)) do
+        add(id)
     end
     for _, id in ipairs(DEFAULT_API_ORDER) do
         add(id)
@@ -1536,6 +1844,18 @@ local function clean_api_order(order, custom, include_id)
         add(include_id)
     end
     return clean
+end
+
+local function same_string_array(left, right)
+    if type(left) ~= "table" or type(right) ~= "table" or #left ~= #right then
+        return false
+    end
+    for index = 1, #left do
+        if tostring(left[index] or "") ~= tostring(right[index] or "") then
+            return false
+        end
+    end
+    return true
 end
 
 local function remove_game_direct(payload)
@@ -1577,7 +1897,7 @@ end
 local function save_api_direct(payload)
     local settings = load_settings()
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
-    if type(custom) ~= "table" then
+    if type(custom) ~= "table" or not is_array(custom) then
         custom = {}
     end
     local native_ids = { skyapi = true, morrenus = true, sushi = true }
@@ -1657,25 +1977,37 @@ local function save_api_direct(payload)
 end
 
 local function save_api_settings_direct(payload)
+    payload = normalize_payload(payload)
     local settings = load_settings()
-    local preferred = trim(get_first_prop(payload, { "preferred", "preferredApi", "PreferredDownloadApi" }, "Automatic"))
+    local preferred = trim(get_first_prop(payload, { "preferred", "preferredApi", "PreferredDownloadApi", "preferredDownloadApi" }, ""))
     local morrenus_key = trim(get_prop(payload, "morrenusApiKey", "MorrenusApiKey", ""))
-    local api_order = get_prop(payload, "apiOrder", "ApiOrder", nil)
+    local api_order = get_first_prop(payload, { "apiOrder", "ApiOrder", "order", "Order", "apiOrderText", "ApiOrderText", "orderText" }, nil)
+    if api_order == nil and type(payload) == "table" and is_array(payload) then
+        api_order = payload
+    end
     if preferred ~= "" then
         settings.PreferredDownloadApi = preferred
     end
     if morrenus_key ~= "" then
         settings.MorrenusApiKey = morrenus_key
     end
-    if type(api_order) == "table" then
-        local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
-        if type(custom) ~= "table" then
-            custom = {}
-        end
-        settings.ApiOrder = clean_api_order(api_order, custom, nil)
-        settings.PreferredDownloadApi = "Automatic"
+    local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
+    if type(custom) ~= "table" or not is_array(custom) then
+        custom = {}
     end
-    write_json(settings_path(), settings)
+    if type(api_order) == "table" or type(api_order) == "string" then
+        settings.ApiOrder = clean_api_order(api_order, custom, nil)
+    else
+        return { success = false, error = "Ordem das APIs nao recebida pelo backend." }
+    end
+    if not write_json(settings_path(), settings) then
+        return { success = false, error = "Nao foi possivel gravar settings.json." }
+    end
+    local saved_settings = read_json(settings_path(), {})
+    local saved_order = clean_api_order(get_prop(saved_settings, "ApiOrder", "apiOrder", {}), custom, nil)
+    if not same_string_array(saved_order, settings.ApiOrder) then
+        return { success = false, error = "A ordem das APIs nao foi persistida em settings.json." }
+    end
     cache_clear()
     return apis_direct()
 end
@@ -1707,7 +2039,7 @@ local function delete_api_direct(payload)
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
     local kept = {}
     local removed_name = ""
-    if type(custom) == "table" then
+    if type(custom) == "table" and is_array(custom) then
         for _, item in ipairs(custom) do
             if type(item) ~= "table" or trim(get_prop(item, "id", "Id", "")) ~= id then
                 table.insert(kept, item)
@@ -2029,26 +2361,6 @@ local function find_fix_sources_direct(payload)
         end
     end
 
-    if #sources == 0 then
-        table.insert(sources, {
-            name = "Pesquisar no Ryuu",
-            type = "Busca manual",
-            provider = "Ryuu",
-            downloadUrl = "https://generator.ryuu.lol/fixes",
-            action = "open",
-            size = ""
-        })
-    end
-
-    table.insert(sources, {
-        name = "Pesquisar no OnlineFix",
-        type = "Link externo",
-        provider = "OnlineFix",
-        action = "copy",
-        downloadUrl = "https://online-fix.me/index.php?do=search&subaction=search&story=" .. url_encode(name ~= "" and name or appid),
-        size = ""
-    })
-
     return {
         gamePath = game_path,
         sources = sources
@@ -2060,24 +2372,22 @@ local function simple_fix_sources(payload, kind)
     local appid = tostring(get_prop(payload, "appid", "appId", ""))
     local name = trim(get_prop(payload, "name", "gameName", appid))
     if kind == "online" then
-        return {
-            {
-                title = "Pesquisar no Online-Fix",
-                provider = "Online-Fix",
-                url = "https://online-fix.me/index.php?do=search&subaction=search&story=" .. name
-            }
-        }
+        return { success = false, error = "OnlineFix foi removido do SkyTools. Use as correcoes Ryuu." }
     end
     if kind == "denuvo" then
-        return {
-            {
-                title = "Pesquisar correcoes Denuvo",
-                provider = "Ryuu/GitHub",
-                sourceUrl = "https://github.com/search?q=" .. name .. "%20denuvo%20fix"
-            }
-        }
+        return find_fix_sources_direct({ appid = appid, name = name })
     end
     return { gamePath = "", sources = {} }
+end
+
+local function archive_extension(value)
+    local text = trim(value):lower()
+    local path = text:match("^[^?]+") or text
+    local extension = path:match("%.([^%.\\/]+)$") or ""
+    if extension == "zip" or extension == "rar" or extension == "7z" then
+        return extension
+    end
+    return ""
 end
 
 local function apply_fix_direct(payload)
@@ -2085,15 +2395,40 @@ local function apply_fix_direct(payload)
     local appid = tostring(get_prop(payload, "appid", "appId", ""))
     local name = trim(get_prop(payload, "name", "gameName", appid))
     local game_path = trim(get_prop(payload, "gamePath", "installPath", ""))
-    local source = get_prop(payload, "source", "sourceJson", {})
+    local source = get_prop(payload, "source", {})
+    local source_json = get_prop(payload, "sourceJson", "source_json", "")
     if type(source) == "string" then
         source = json_decode(source, {})
     end
     if type(source) ~= "table" then
         source = {}
     end
+    if trim(get_first_prop(source, { "downloadUrl", "DownloadUrl", "sourceUrl", "SourceUrl", "url", "Url", "href", "link" }, "")) == "" and trim(source_json) ~= "" then
+        local decoded = json_decode(source_json, nil)
+        if type(decoded) == "table" then
+            source = decoded
+        end
+    end
 
-    local url = trim(get_first_prop(source, { "downloadUrl", "sourceUrl", "url" }, ""))
+    local url = trim(get_first_prop(source, { "downloadUrl", "DownloadUrl", "sourceUrl", "SourceUrl", "url", "Url", "href", "link" }, ""))
+    if url == "" then
+        url = trim(get_first_prop(payload, { "downloadUrl", "DownloadUrl", "sourceUrl", "SourceUrl", "url", "Url", "href", "link" }, ""))
+        if url ~= "" then
+            source.downloadUrl = url
+            source.name = trim(get_first_prop(source, { "name", "title" }, get_first_prop(payload, { "sourceName", "name" }, "")))
+            source.type = trim(get_first_prop(source, { "type" }, get_first_prop(payload, { "sourceType", "type" }, "")))
+            source.provider = trim(get_first_prop(source, { "provider" }, get_prop(payload, "provider", "Ryuu")))
+            source.size = trim(get_first_prop(source, { "size" }, get_prop(payload, "size", "")))
+        end
+    end
+    if url == "" then
+        local source_name = trim(get_first_prop(source, { "name", "title" }, get_prop(payload, "sourceName", "")))
+        if archive_extension(source_name) ~= "" then
+            url = "https://generator.ryuu.lol/fixes/" .. source_name:gsub(" ", "%%20")
+            source.downloadUrl = url
+            source.name = source_name
+        end
+    end
     if url == "" then
         return { success = false, error = "Fonte sem link para abrir." }
     end
@@ -2106,20 +2441,11 @@ local function apply_fix_direct(payload)
 
     local provider = trim(get_prop(source, "provider", "Provider", ""))
     local action = trim(get_prop(source, "action", "Action", ""))
-    if provider:lower():find("online", 1, true) ~= nil or action == "copy" then
-        return {
-            appId = tonumber(appid) or appid,
-            name = name,
-            url = url,
-            action = "copy",
-            message = "Link OnlineFix pronto para copiar."
-        }
-    end
-
-    if url:lower():match("%.zip") == nil then
+    local extension = archive_extension(url)
+    if extension == "" then
         return {
             success = false,
-            error = "Aplicacao automatica suporta apenas pacotes .zip. Abra o link manualmente para este pacote.",
+            error = "Aplicacao automatica suporta apenas pacotes .zip, .rar e .7z.",
             url = url
         }
     end
@@ -2128,15 +2454,17 @@ local function apply_fix_direct(payload)
     end
 
     local script_path = join_path(data_root(), "skytools-apply-fix-" .. appid .. ".ps1")
-    local package_path = join_path(data_root(), "skytools-fix-" .. appid .. ".zip")
+    local package_path = join_path(data_root(), "skytools-fix-" .. appid .. "." .. extension)
     local extract_path = join_path(data_root(), "skytools-fix-" .. appid .. "-extract")
     local backup_path = join_path(data_root(), "fix-backups\\" .. appid .. "\\" .. tostring(os.time()))
     local log_path = join_path(game_path, "skytools-fix-log-" .. appid .. ".log")
+    local source_type = trim(get_prop(source, "type", "Type", "Fix"))
     local script = table.concat({
         "$ErrorActionPreference = 'Stop'",
         "$url = " .. ps_quote(url),
         "$appid = " .. ps_quote(appid),
         "$game = " .. ps_quote(name ~= "" and name or ("AppID " .. appid)),
+        "$sourceType = " .. ps_quote(source_type ~= "" and source_type or "Fix"),
         "$gamePath = " .. ps_quote(game_path),
         "$package = " .. ps_quote(package_path),
         "$extract = " .. ps_quote(extract_path),
@@ -2145,11 +2473,37 @@ local function apply_fix_direct(payload)
         "if (!(Test-Path -LiteralPath $gamePath)) { throw 'Pasta do jogo nao encontrada.' }",
         "Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue",
         "New-Item -ItemType Directory -Path (Split-Path -Parent $package) -Force | Out-Null",
+        "New-Item -ItemType Directory -Path $extract -Force | Out-Null",
         "Invoke-WebRequest -Uri $url -OutFile $package",
-        "Expand-Archive -LiteralPath $package -DestinationPath $extract -Force",
+        "$ext = [IO.Path]::GetExtension($package).ToLowerInvariant()",
+        "function Expand-FixArchive {",
+        "  if ($ext -eq '.zip') {",
+        "    try { Expand-Archive -LiteralPath $package -DestinationPath $extract -Force; return } catch { }",
+        "  }",
+        "  $tar = (Get-Command tar.exe -ErrorAction SilentlyContinue).Source",
+        "  if ($tar) {",
+        "    & $tar -xf $package -C $extract",
+        "    if ($LASTEXITCODE -eq 0) { return }",
+        "  }",
+        "  $candidates = @(",
+        "    (Join-Path $env:ProgramFiles '7-Zip\\7z.exe'),",
+        "    (Join-Path ${env:ProgramFiles(x86)} '7-Zip\\7z.exe'),",
+        "    (Join-Path (Split-Path -Parent $package) '7z.exe')",
+        "  )",
+        "  $seven = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1",
+        "  if (!$seven) { throw 'Nao foi possivel extrair o pacote. Instale o 7-Zip ou use Windows com tar.exe/libarchive.' }",
+        "  & $seven x $package ('-o' + $extract) -y | Out-Null",
+        "  if ($LASTEXITCODE -ne 0) { throw '7-Zip nao conseguiu extrair o pacote.' }",
+        "}",
+        "Expand-FixArchive",
         "$sourceRoot = $extract",
         "$appidDir = Join-Path $extract $appid",
         "if (Test-Path -LiteralPath $appidDir) { $sourceRoot = $appidDir }",
+        "else {",
+        "  $topFiles = @(Get-ChildItem -LiteralPath $extract -File -Force)",
+        "  $topDirs = @(Get-ChildItem -LiteralPath $extract -Directory -Force)",
+        "  if ($topFiles.Count -eq 0 -and $topDirs.Count -eq 1) { $sourceRoot = $topDirs[0].FullName }",
+        "}",
         "$gameRoot = [IO.Path]::GetFullPath($gamePath).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
         "$sourceRootFull = [IO.Path]::GetFullPath($sourceRoot).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
         "$files = Get-ChildItem -LiteralPath $sourceRoot -File -Recurse",
@@ -2171,7 +2525,7 @@ local function apply_fix_direct(payload)
         "  Copy-Item -LiteralPath $file.FullName -Destination $dest -Force",
         "  $written += $relative",
         "}",
-        "$entry = @('[FIX]', 'Date: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), 'Game: ' + $game, 'Provider: Ryuu', 'Download URL: ' + $url, 'Backup: ' + $backup, 'Files:') + $written + @('[/FIX]', '')",
+        "$entry = @('[FIX]', 'Date: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), 'Game: ' + $game, 'Provider: Ryuu', 'Type: ' + $sourceType, 'Download URL: ' + $url, 'Backup: ' + $backup, 'Files:') + $written + @('[/FIX]', '')",
         "Add-Content -LiteralPath $log -Value $entry -Encoding UTF8"
     }, "\r\n")
     write_file(script_path, script)
@@ -2190,6 +2544,7 @@ local function apply_fix_direct(payload)
         name = name,
         source = source,
         url = url,
+        type = source_type,
         gamePath = game_path,
         createdAt = os.date("%Y-%m-%dT%H:%M:%S")
     })
@@ -2199,49 +2554,60 @@ local function apply_fix_direct(payload)
         appId = tonumber(appid) or appid,
         name = name,
         url = url,
+        type = source_type,
         gamePath = game_path,
         message = "Correcao Ryuu iniciada em segundo plano."
     }
 end
 
+local function response_from_result(result)
+    if type(result) == "table" and result.success == false then
+        return result
+    end
+    if type(result) == "table" and result.success == true and result.data ~= nil then
+        return result
+    end
+    return { success = true, data = result, error = "" }
+end
+
 local function dispatch_inline(method, payload)
     payload = payload or {}
-    if method == "status" then return { success = true, data = status_direct(payload), error = "" } end
-    if method == "installed" then return { success = true, data = installed_direct(), error = "" } end
+    if method == "status" then return response_from_result(status_direct(payload)) end
+    if method == "installed" then return response_from_result(installed_direct()) end
+    if method == "steam-installed" then return response_from_result(steam_installed_direct()) end
     if method == "name-cache" then
         local cache = load_name_cache()
-        return { success = true, data = { path = name_cache_path(), games = cache, count = count_map_values(cache) }, error = "" }
+        return response_from_result({ path = name_cache_path(), games = cache, count = count_map_values(cache) })
     end
-    if method == "apis" then return { success = true, data = apis_direct(), error = "" } end
+    if method == "apis" then return response_from_result(apis_direct()) end
     if method == "save-api" then
         local result = save_api_direct(payload)
-        if result.success == false then return result end
-        return { success = true, data = result, error = "" }
+        return response_from_result(result)
     end
-    if method == "save-api-settings" then return { success = true, data = save_api_settings_direct(payload), error = "" } end
-    if method == "delete-api" then return { success = true, data = delete_api_direct(payload), error = "" } end
+    if method == "save-api-settings" then
+        local result = save_api_settings_direct(payload)
+        return response_from_result(result)
+    end
+    if method == "delete-api" then return response_from_result(delete_api_direct(payload)) end
     if method == "remove-game" then
         local result = remove_game_direct(payload)
-        if result.success == false then return result end
-        return { success = true, data = result, error = "" }
+        return response_from_result(result)
     end
-    if method == "backup-export" then return { success = true, data = backup_export_direct(payload), error = "" } end
+    if method == "backup-export" then return response_from_result(backup_export_direct(payload)) end
     if method == "backup-restore" then
         local result = backup_restore_direct(payload)
-        if result.success == false then return result end
-        return { success = true, data = result, error = "" }
+        return response_from_result(result)
     end
-    if method == "fix-sources" then return { success = true, data = find_fix_sources_direct(payload), error = "" } end
-    if method == "online-fix" then return { success = true, data = simple_fix_sources(payload, "online"), error = "" } end
-    if method == "denuvo-fix" then return { success = true, data = simple_fix_sources(payload, "denuvo"), error = "" } end
-    if method == "repair" then return run_repair_direct(payload) end
+    if method == "fix-sources" then return response_from_result(find_fix_sources_direct(payload)) end
+    if method == "online-fix" then return response_from_result(simple_fix_sources(payload, "online")) end
+    if method == "denuvo-fix" then return response_from_result(simple_fix_sources(payload, "denuvo")) end
+    if method == "repair" then return response_from_result(run_repair_direct(payload)) end
     if method == "apply-fix" then
         local result = apply_fix_direct(payload)
-        if result.success == false then return result end
-        return { success = true, data = result, error = "" }
+        return response_from_result(result)
     end
-    if method == "integration" then return { success = true, data = integration_direct(payload), error = "" } end
-    if method == "add-game" then return run_wscript_installer(payload) end
+    if method == "integration" then return response_from_result(integration_direct(payload)) end
+    if method == "add-game" then return response_from_result(run_wscript_installer(payload)) end
     return { success = false, error = "Metodo desconhecido: " .. tostring(method) }
 end
 
@@ -2273,6 +2639,10 @@ end
 
 function SkyToolsInstalled()
     return worker_call("installed", {}, 60)
+end
+
+function SkyToolsSteamInstalled()
+    return worker_call("steam-installed", {}, 60)
 end
 
 function SkyToolsNameCache()
@@ -2358,6 +2728,11 @@ function skytools_installed()
     return SkyToolsInstalled()
 end
 _G["skytools_installed"] = skytools_installed
+
+function skytools_steam_installed()
+    return SkyToolsSteamInstalled()
+end
+_G["skytools_steam_installed"] = skytools_steam_installed
 
 function skytools_apis()
     return SkyToolsApis()

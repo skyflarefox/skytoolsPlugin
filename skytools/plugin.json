@@ -3,7 +3,7 @@
   "name": "skytools-plugin",
   "common_name": "SkyTools Plugin",
   "description": "DolinTools integrado diretamente na Steam via Millennium.",
-  "version": "0.1.8",
+  "version": "0.1.25",
   "backendType": "lua",
   "useBackend": true,
   "backend": "backend",

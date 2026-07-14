@@ -6,8 +6,8 @@ Plugin Millennium que leva as principais funcoes do DolinTools para dentro da St
 
 ```powershell
 cd SkyTools.Plugin
-bun install
-bun run build
+pnpm install
+pnpm build
 ```
 
 Depois coloque esta pasta em `%Steam%\plugins` ou crie um link simbolico para ela.
