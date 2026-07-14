@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var SKYTOOLS_UI_VERSION = "2026-07-13-simplified-ui-3";
+  var SKYTOOLS_UI_VERSION = "2026-07-14-stable-cache-1";
 
   if (window.__skytoolsPluginLoaded && window.__skytoolsPluginVersion === SKYTOOLS_UI_VERSION) {
     return;
@@ -358,7 +358,7 @@
     if (state.installedLoading) {
       return state.installedPromise || Promise.resolve(state.installed);
     }
-    if (!force && state.installed && Date.now() - state.installedLoadedAt < 20000) {
+    if (!force && state.installed) {
       updateGameButton();
       return Promise.resolve(state.installed);
     }
@@ -390,7 +390,6 @@
 
     if (document.querySelector(".skytools-game-button")) {
       updateGameButton();
-      refreshInstalledCache(false);
       return;
     }
 
@@ -412,7 +411,9 @@
     updateGameButton();
     target.appendChild(button);
     updateGameButton();
-    refreshInstalledCache(false);
+    if (!state.installed && !state.installedLoading) {
+      refreshInstalledCache(false);
+    }
   }
 
   function ensureFloatingMenu() {
@@ -1240,8 +1241,11 @@
 
     renderPanelBody();
     setActivity("busy", "Carregando status", "Sincronizando com o backend...");
-    loadStatus(true).then(function () {
-      return refreshInstalledCache(false);
+    (state.status ? Promise.resolve(state.status) : loadStatus(true)).then(function () {
+      if (!state.installed && (state.activeTab === "biblioteca" || state.activeTab === "correcoes")) {
+        return refreshInstalledCache(false);
+      }
+      return state.installed;
     }).then(function () {
       renderPanelBody();
       if (!state.busy) {
@@ -1267,7 +1271,6 @@
   function boot() {
     log("SkyTools browser script loaded: " + location.href);
     tick();
-    refreshInstalledCache(false);
     window.setInterval(function () {
       if (location.href !== state.lastUrl) {
         state.lastUrl = location.href;

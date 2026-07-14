@@ -25,8 +25,14 @@ $copies = @(
     @{ Source = 'backend\skytools_installer.js'; Target = 'backend\skytools_installer.js' },
     @{ Source = 'public\skytools.js'; Target = 'public\skytools.js' },
     @{ Source = 'public\skytools.css'; Target = 'public\skytools.css' },
-    @{ Source = 'public\skytools.js'; Target = 'webkit\skytools.js' },
-    @{ Source = 'public\skytools.css'; Target = 'webkit\skytools.css' }
+    @{ Source = 'public\skytools_logo.ico'; Target = 'public\skytools_logo.ico' },
+    @{ Source = 'public\skytools_logo.png'; Target = 'public\skytools_logo.png' },
+    @{ Source = 'public\fontawesome\webfonts\fa-solid-900.woff2'; Target = 'public\fontawesome\webfonts\fa-solid-900.woff2' },
+    @{ Source = 'public\skytools_logo.ico'; Target = 'webkit\SkyTools\skytools_logo.ico' },
+    @{ Source = 'public\skytools_logo.png'; Target = 'webkit\SkyTools\skytools_logo.png' },
+    @{ Source = 'public\skytools.js'; Target = 'webkit\SkyTools\skytools.js' },
+    @{ Source = 'public\skytools.css'; Target = 'webkit\SkyTools\skytools.css' },
+    @{ Source = 'public\fontawesome\webfonts\fa-solid-900.woff2'; Target = 'webkit\SkyTools\fontawesome\webfonts\fa-solid-900.woff2' }
 )
 
 foreach ($item in $copies) {
@@ -66,12 +72,28 @@ foreach ($file in $oldHiddenFiles) {
     }
 }
 
+$oldPluginWebkitAssets = @(
+    (Join-Path $targetRoot 'webkit\skytools.js'),
+    (Join-Path $targetRoot 'webkit\skytools.css'),
+    (Join-Path $targetRoot 'webkit\skytools_logo.ico'),
+    (Join-Path $targetRoot 'webkit\skytools_logo.png'),
+    (Join-Path $targetRoot 'webkit\fontawesome\webfonts\fa-solid-900.woff2')
+)
+foreach ($file in $oldPluginWebkitAssets) {
+    if (Test-Path -LiteralPath $file) {
+        Remove-Item -LiteralPath $file -Force
+        Write-Host "Removido asset antigo $file"
+    }
+}
+
 $steamUiRoot = 'C:\Program Files (x86)\Steam\steamui'
 $oldSteamUiAssets = @(
     (Join-Path $steamUiRoot 'skytools.js'),
     (Join-Path $steamUiRoot 'skytools.css'),
     (Join-Path $steamUiRoot 'webkit\skytools.js'),
     (Join-Path $steamUiRoot 'webkit\skytools.css'),
+    (Join-Path $steamUiRoot 'webkit\skytools_logo.ico'),
+    (Join-Path $steamUiRoot 'webkit\skytools_logo.png'),
     (Join-Path $steamUiRoot 'skytools_logo.ico'),
     (Join-Path $steamUiRoot 'skytools_logo.png')
 )
@@ -82,11 +104,13 @@ foreach ($file in $oldSteamUiAssets) {
     }
 }
 
+$steamUiSkyToolsRoot = Join-Path $steamUiRoot 'webkit\SkyTools'
 $steamUiCopies = @(
-    @{ Source = 'public\skytools.js'; Target = (Join-Path $steamUiRoot 'skytools.js') },
-    @{ Source = 'public\skytools.css'; Target = (Join-Path $steamUiRoot 'skytools.css') },
-    @{ Source = 'public\skytools.js'; Target = (Join-Path $steamUiRoot 'webkit\skytools.js') },
-    @{ Source = 'public\skytools.css'; Target = (Join-Path $steamUiRoot 'webkit\skytools.css') }
+    @{ Source = 'public\skytools.js'; Target = (Join-Path $steamUiSkyToolsRoot 'skytools.js') },
+    @{ Source = 'public\skytools.css'; Target = (Join-Path $steamUiSkyToolsRoot 'skytools.css') },
+    @{ Source = 'public\skytools_logo.ico'; Target = (Join-Path $steamUiSkyToolsRoot 'skytools_logo.ico') },
+    @{ Source = 'public\skytools_logo.png'; Target = (Join-Path $steamUiSkyToolsRoot 'skytools_logo.png') },
+    @{ Source = 'public\fontawesome\webfonts\fa-solid-900.woff2'; Target = (Join-Path $steamUiSkyToolsRoot 'fontawesome\webfonts\fa-solid-900.woff2') }
 )
 
 foreach ($item in $steamUiCopies) {

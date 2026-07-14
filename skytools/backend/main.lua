@@ -16,8 +16,8 @@ fs_ok, fs = pcall(require, "fs")
 local PLUGIN_ID = "skytools-plugin"
 local BROWSER_JS = "public/skytools.js"
 local BROWSER_CSS = "public/skytools.css"
-local BROWSER_JS_WEBKIT = "webkit/skytools.js"
-local BROWSER_CSS_WEBKIT = "webkit/skytools.css"
+local BROWSER_JS_WEBKIT = "webkit/SkyTools/skytools.js"
+local BROWSER_CSS_WEBKIT = "webkit/SkyTools/skytools.css"
 local DEFAULT_API_ORDER = { "skyapi", "morrenus", "sushi" }
 
 local runtime = {
@@ -333,33 +333,40 @@ end
 local function copy_public_assets()
     local public = join_path(plugin_dir(), "public")
     local webkit = join_path(plugin_dir(), "webkit")
+    local webkit_skytools = join_path(webkit, "SkyTools")
     local steam_path = detect_steam_path()
     local src_js = join_path(public, "skytools.js")
     local src_css = join_path(public, "skytools.css")
     local src_ico = join_path(public, "skytools_logo.ico")
     local src_png = join_path(public, "skytools_logo.png")
     local src_fa_solid = join_path(join_path(join_path(public, "fontawesome"), "webfonts"), "fa-solid-900.woff2")
-    local js_webkit = copy_file(src_js, join_path(webkit, "skytools.js"))
-    local css_webkit = copy_file(src_css, join_path(webkit, "skytools.css"))
-    local ico_webkit = copy_file(src_ico, join_path(webkit, "skytools_logo.ico"))
-    local png_webkit = copy_file(src_png, join_path(webkit, "skytools_logo.png"))
-    local fa_solid_webkit = copy_file(src_fa_solid, join_path(join_path(join_path(webkit, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
-    local js_legacy = false
-    local css_legacy = false
-    local ico_legacy = false
-    local png_legacy = false
+    local js_webkit = copy_file(src_js, join_path(webkit_skytools, "skytools.js"))
+    local css_webkit = copy_file(src_css, join_path(webkit_skytools, "skytools.css"))
+    local ico_webkit = copy_file(src_ico, join_path(webkit_skytools, "skytools_logo.ico"))
+    local png_webkit = copy_file(src_png, join_path(webkit_skytools, "skytools_logo.png"))
+    local fa_solid_webkit = copy_file(src_fa_solid, join_path(join_path(join_path(webkit_skytools, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
     local js_steamui_webkit = false
     local css_steamui_webkit = false
+    local png_steamui_webkit = false
+    local ico_steamui_webkit = false
+    local fa_steamui_webkit = false
 
     if steam_path ~= "" then
         local steamui = join_path(steam_path, "steamui")
-        local steamui_webkit = join_path(steamui, "webkit")
-        js_legacy = sync_file_if_different(src_js, join_path(steamui, "skytools.js"))
-        css_legacy = sync_file_if_different(src_css, join_path(steamui, "skytools.css"))
-        ico_legacy = sync_file_if_different(src_ico, join_path(steamui, "skytools_logo.ico"))
-        png_legacy = sync_file_if_different(src_png, join_path(steamui, "skytools_logo.png"))
+        local steamui_webkit = join_path(join_path(steamui, "webkit"), "SkyTools")
+        delete_file(join_path(steamui, "skytools.js"))
+        delete_file(join_path(steamui, "skytools.css"))
+        delete_file(join_path(steamui, "skytools_logo.ico"))
+        delete_file(join_path(steamui, "skytools_logo.png"))
+        delete_file(join_path(join_path(steamui, "webkit"), "skytools.js"))
+        delete_file(join_path(join_path(steamui, "webkit"), "skytools.css"))
+        delete_file(join_path(join_path(steamui, "webkit"), "skytools_logo.ico"))
+        delete_file(join_path(join_path(steamui, "webkit"), "skytools_logo.png"))
         js_steamui_webkit = sync_file_if_different(src_js, join_path(steamui_webkit, "skytools.js"))
         css_steamui_webkit = sync_file_if_different(src_css, join_path(steamui_webkit, "skytools.css"))
+        ico_steamui_webkit = sync_file_if_different(src_ico, join_path(steamui_webkit, "skytools_logo.ico"))
+        png_steamui_webkit = sync_file_if_different(src_png, join_path(steamui_webkit, "skytools_logo.png"))
+        fa_steamui_webkit = sync_file_if_different(src_fa_solid, join_path(join_path(join_path(steamui_webkit, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
     end
 
     runtime.last_injection.copy = {
@@ -369,14 +376,13 @@ local function copy_public_assets()
         icoWebkit = ico_webkit,
         pngWebkit = png_webkit,
         faSolidWebkit = fa_solid_webkit,
-        jsLegacy = js_legacy,
-        cssLegacy = css_legacy,
-        icoLegacy = ico_legacy,
-        pngLegacy = png_legacy,
         jsSteamUiWebkit = js_steamui_webkit,
-        cssSteamUiWebkit = css_steamui_webkit
+        cssSteamUiWebkit = css_steamui_webkit,
+        icoSteamUiWebkit = ico_steamui_webkit,
+        pngSteamUiWebkit = png_steamui_webkit,
+        faSteamUiWebkit = fa_steamui_webkit
     }
-    log_info("browser assets synced: jsWebkit=" .. tostring(js_webkit) .. ", jsLegacy=" .. tostring(js_legacy) .. ", jsSteamUiWebkit=" .. tostring(js_steamui_webkit))
+    log_info("browser assets synced: jsWebkit=" .. tostring(js_webkit) .. ", jsSteamUiWebkit=" .. tostring(js_steamui_webkit))
     return js_webkit
 end
 
