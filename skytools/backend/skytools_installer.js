@@ -74,6 +74,19 @@
     return "'" + String(value || "").replace(/'/g, "''") + "'";
   }
 
+  function cleanText(value) {
+    return String(value == null ? "" : value).replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+  }
+
+  function isPlaceholderGameName(value, id) {
+    var name = cleanText(value);
+    var app = String(id || "");
+    if (!name) return true;
+    if (app && name === app) return true;
+    if (app && name.toLowerCase() === ("appid " + app).toLowerCase()) return true;
+    return /^appid\s+\d+$/i.test(name);
+  }
+
   function removeTree(path) {
     try {
       if (fso.FolderExists(path)) fso.DeleteFolder(path, true);
@@ -123,8 +136,31 @@
     writeText(resultPath, toJson(payload));
   }
 
-  function download(url, headers, target) {
+  function isRawGitHubUrl(url) {
+    return /^https?:\/\/raw\.githubusercontent\.com\//i.test(String(url || ""));
+  }
+
+  function normalizeDownloadUrl(url) {
+    return String(url || "").replace(/(raw\.githubusercontent\.com\/[^\/]+\/[^\/]+)\/refs\/heads\/main\//i, "$1/main/");
+  }
+
+  function retryUrl(url, attempt) {
+    if (attempt <= 1 || !isRawGitHubUrl(url)) return url;
+    return url + (url.indexOf("?") >= 0 ? "&" : "?") + "skytools_retry=" + attempt + "_" + new Date().getTime();
+  }
+
+  function shouldRetryDownload(status, url) {
+    if (status === 0 || status === 408 || status === 425 || status === 429) return true;
+    if (status >= 500 && status <= 599) return true;
+    if (status === 404 && isRawGitHubUrl(url)) return true;
+    return false;
+  }
+
+  function downloadOnce(url, headers, target) {
     var http = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");
+    try {
+      http.setTimeouts(10000, 10000, 30000, 30000);
+    } catch (_) {}
     http.open("GET", url, false);
     http.setRequestHeader("User-Agent", "SkyToolsPlugin/1.0");
     http.setRequestHeader("Accept", "application/zip,application/octet-stream,*/*");
@@ -135,11 +171,42 @@
         }
       }
     }
-    http.send();
+    try {
+      http.send();
+    } catch (networkError) {
+      var net = new Error("Falha de rede em " + url + ": " + (networkError && networkError.message ? networkError.message : String(networkError)));
+      net.status = 0;
+      throw net;
+    }
     if (http.status < 200 || http.status >= 300) {
-      throw new Error("HTTP " + http.status + " em " + url);
+      var err = new Error("HTTP " + http.status + " em " + url);
+      err.status = Number(http.status) || 0;
+      throw err;
     }
     writeBinary(target, http.responseBody);
+  }
+
+  function download(url, headers, target) {
+    var baseUrl = normalizeDownloadUrl(url);
+    var attempts = isRawGitHubUrl(baseUrl) ? 4 : 3;
+    var lastError = null;
+    for (var attempt = 1; attempt <= attempts; attempt += 1) {
+      var currentUrl = retryUrl(baseUrl, attempt);
+      try {
+        removeTree(target);
+        downloadOnce(currentUrl, headers, target);
+        return { attempts: attempt, url: currentUrl };
+      } catch (error) {
+        lastError = error;
+        removeTree(target);
+        if (attempt >= attempts || !shouldRetryDownload(Number(error.status) || 0, baseUrl)) {
+          break;
+        }
+        WScript.Sleep(700 * attempt);
+      }
+    }
+    var status = lastError && lastError.status ? ("HTTP " + lastError.status) : "falha";
+    throw new Error(status + " em " + baseUrl + " ap\u00f3s " + attempts + " tentativa(s)");
   }
 
   function collectFiles(root, pattern, output) {
@@ -177,7 +244,7 @@
     var app = new ActiveXObject("Shell.Application");
     var source = app.NameSpace(zipPath);
     var target = app.NameSpace(targetDir);
-    if (!source || !target) throw new Error("Nao foi possivel abrir o pacote zip.");
+    if (!source || !target) throw new Error("N\u00e3o foi poss\u00edvel abrir o pacote zip.");
     target.CopyHere(source.Items(), 4 | 16 | 512 | 1024);
     for (var i = 0; i < 120; i += 1) {
       WScript.Sleep(500);
@@ -185,7 +252,7 @@
       var manifestFiles = collectFiles(targetDir, /\.manifest$/i, []);
       if (luaFiles.length > 0 || manifestFiles.length > 0) return;
     }
-    throw new Error("A extracao do pacote demorou demais ou nao gerou arquivos validos.");
+    throw new Error("A extra\u00e7\u00e3o do pacote demorou demais ou n\u00e3o gerou arquivos v\u00e1lidos.");
   }
 
   function chooseScript(luaFiles) {
@@ -239,7 +306,7 @@
     if (api.useProxy && api.proxyUrlTemplate && String(api.proxyUrlTemplate).indexOf("<url>") >= 0) {
       url = replaceAll(api.proxyUrlTemplate, "<url>", encodeURIComponent(url));
     }
-    return url;
+    return normalizeDownloadUrl(url);
   }
 
   function isDisabled(settings, id) {
@@ -275,9 +342,9 @@
 
   function builtInSources(settings) {
     var sources = [];
-    var skyapi = nativeSource(settings, "skyapi", "SkyAPI", "https://raw.githubusercontent.com/skyflarefox/Skyapi/refs/heads/main/<appid>.zip", "");
+    var skyapi = nativeSource(settings, "skyapi", "SkyAPI", "https://raw.githubusercontent.com/skyflarefox/Skyapi/main/<appid>.zip", "");
     var morrenus = nativeSource(settings, "morrenus", "Morrenus", "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>", morrenusKey);
-    var sushi = nativeSource(settings, "sushi", "Sushi", "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/refs/heads/main/<appid>.zip", "");
+    var sushi = nativeSource(settings, "sushi", "Sushi", "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/main/<appid>.zip", "");
     if (skyapi) sources.push(skyapi);
     if (morrenus) sources.push(morrenus);
     if (sushi) sources.push(sushi);
@@ -344,7 +411,7 @@
       copyFolderFromZip(zipPath, tempDir);
       var manifestFiles = collectFiles(tempDir, /\.manifest$/i, []);
       var luaFiles = collectFiles(tempDir, /\.lua$/i, []);
-      if (manifestFiles.length === 0 && luaFiles.length === 0) throw new Error("O pacote nao contem .manifest nem .lua.");
+      if (manifestFiles.length === 0 && luaFiles.length === 0) throw new Error("O pacote n\u00e3o cont\u00e9m .manifest nem .lua.");
       var scriptSource = chooseScript(luaFiles);
       if (!scriptSource) throw new Error("Nenhum script .lua foi encontrado no pacote.");
 
@@ -382,9 +449,10 @@
       for (var r = 0; r < records.length; r += 1) {
         if (String((records[r] || {}).AppId || (records[r] || {}).appId || "") !== String(appId)) kept.push(records[r]);
       }
+      var cleanGameName = isPlaceholderGameName(gameName, appId) ? "" : cleanText(gameName);
       kept.push({
         AppId: Number(appId),
-        GameName: gameName,
+        GameName: cleanGameName,
         SourceName: sourceName,
         InstalledAt: isoNow(),
         SourcePackage: sourceName,
@@ -397,12 +465,14 @@
       var cachePath = combine(dataRoot, "skytools-app-name-cache.json");
       var cache = readJson(cachePath, {});
       if (!cache || typeof cache !== "object") cache = {};
-      cache[String(appId)] = { AppId: Number(appId), Name: gameName };
-      writeText(cachePath, toJson(cache));
+      if (cleanGameName) {
+        cache[String(appId)] = { AppId: Number(appId), Name: cleanGameName };
+        writeText(cachePath, toJson(cache));
+      }
 
       return {
         appId: Number(appId),
-        gameName: gameName,
+        gameName: cleanGameName || gameName,
         scriptPath: scriptDestination,
         manifestCount: manifestFiles.length,
         dlcCount: dlcCount,
@@ -415,10 +485,10 @@
 
   try {
     if (!dataRoot || !steamPath || !scriptDir || !appId || !resultPath) {
-      throw new Error("Parametros insuficientes para instalar o jogo.");
+      throw new Error("Par\u00e2metros insuficientes para instalar o jogo.");
     }
     ensureDir(dataRoot);
-    if (!fso.FolderExists(steamPath)) throw new Error("Steam nao encontrada: " + steamPath);
+    if (!fso.FolderExists(steamPath)) throw new Error("Steam n\u00e3o encontrada: " + steamPath);
 
     var tempZip = combine(combine(dataRoot, "temp"), appId + "-" + new Date().getTime() + ".zip");
     var sources = loadSources();
@@ -435,7 +505,7 @@
       }
     }
     if (!result) {
-      throw new Error("Nenhuma API retornou um pacote valido. " + errors.join(" | "));
+      throw new Error("Nenhuma API retornou um pacote v\u00e1lido. " + errors.join(" | "));
     }
     removeTree(tempZip);
     writeResult({ success: true, data: result, error: "" });

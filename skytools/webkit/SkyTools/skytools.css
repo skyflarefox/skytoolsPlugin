@@ -442,6 +442,36 @@
   gap: 8px;
 }
 
+.skytools-scroll-list {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(382px, calc(100vh - 336px));
+  min-height: 132px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  contain: content;
+  scrollbar-gutter: stable;
+}
+
+.skytools-fix-game-list {
+  align-content: start;
+}
+
+.skytools-load-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid rgba(255, 166, 77, 0.22);
+  border-radius: 7px;
+  color: #ffd29a;
+  background: rgba(255, 166, 77, 0.08);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .skytools-api-panel {
   display: grid;
   gap: 12px;

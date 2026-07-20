@@ -221,10 +221,24 @@ local function delete_file(path)
     end)
 end
 
+local function delete_directory(path)
+    path = tostring(path or "")
+    if path == "" then
+        return
+    end
+    local command = "cmd.exe /c if exist " .. quote_arg(path) .. " rmdir /s /q " .. quote_arg(path) .. " >nul 2>nul"
+    pcall(function()
+        if utils ~= nil and utils.exec ~= nil then
+            return utils.exec(command)
+        end
+        return os.execute(command)
+    end)
+end
+
 local function copy_file(source, target)
     local data = read_file(source)
     if data == nil then
-        log_error("Asset nao encontrado: " .. tostring(source))
+        log_error("Asset não encontrado: " .. tostring(source))
         return false
     end
 
@@ -238,7 +252,7 @@ end
 local function sync_file_if_different(source, target)
     local source_data = read_file(source)
     if source_data == nil then
-        log_error("Arquivo de origem nao encontrado: " .. tostring(source))
+        log_error("Arquivo de origem não encontrado: " .. tostring(source))
         return false
     end
     local target_data = read_file(target)
@@ -393,15 +407,22 @@ local function copy_public_assets()
 
     if steam_path ~= "" then
         local steamui = join_path(steam_path, "steamui")
-        local steamui_webkit = join_path(join_path(steamui, "webkit"), "SkyTools")
+        local legacy_webkit = join_path(steamui, "webkit")
+        local steamui_webkit = join_path(legacy_webkit, "SkyTools")
         delete_file(join_path(steamui, "skytools.js"))
         delete_file(join_path(steamui, "skytools.css"))
         delete_file(join_path(steamui, "skytools_logo.ico"))
         delete_file(join_path(steamui, "skytools_logo.png"))
-        delete_file(join_path(join_path(steamui, "webkit"), "skytools.js"))
-        delete_file(join_path(join_path(steamui, "webkit"), "skytools.css"))
-        delete_file(join_path(join_path(steamui, "webkit"), "skytools_logo.ico"))
-        delete_file(join_path(join_path(steamui, "webkit"), "skytools_logo.png"))
+        delete_file(join_path(legacy_webkit, "skytools.js"))
+        delete_file(join_path(legacy_webkit, "skytools.css"))
+        delete_file(join_path(legacy_webkit, "skytools_logo.ico"))
+        delete_file(join_path(legacy_webkit, "skytools_logo.png"))
+        delete_directory(join_path(legacy_webkit, "fontawesome"))
+        delete_file(join_path(steamui_webkit, "skytools.js"))
+        delete_file(join_path(steamui_webkit, "skytools.css"))
+        delete_file(join_path(steamui_webkit, "skytools_logo.ico"))
+        delete_file(join_path(steamui_webkit, "skytools_logo.png"))
+        delete_file(join_path(join_path(join_path(steamui_webkit, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
         js_steamui_webkit = sync_file_if_different(src_js, join_path(steamui_webkit, "skytools.js"))
         css_steamui_webkit = sync_file_if_different(src_css, join_path(steamui_webkit, "skytools.css"))
         ico_steamui_webkit = sync_file_if_different(src_ico, join_path(steamui_webkit, "skytools_logo.ico"))
@@ -1231,18 +1252,36 @@ local function load_name_cache()
     return cached
 end
 
+local function is_placeholder_app_name(name, appid)
+    local value = trim(name)
+    local id = tostring(appid or "")
+    if value == "" then
+        return true
+    end
+    if id ~= "" and value == id then
+        return true
+    end
+    if id ~= "" and value:lower() == ("appid " .. id):lower() then
+        return true
+    end
+    if value:lower():match("^appid%s+%d+$") ~= nil then
+        return true
+    end
+    return false
+end
+
 local function name_cache_map()
     local map = {}
     local cache = load_name_cache()
     for key, item in pairs(cache) do
         if type(item) == "string" then
-            if trim(item) ~= "" then
+            if not is_placeholder_app_name(item, key) then
                 map[tostring(key)] = trim(item)
             end
         elseif type(item) == "table" then
             local appid = get_prop(item, "AppId", "appId", key)
             local name = get_prop(item, "Name", "name", "")
-            if appid ~= nil and trim(name) ~= "" then
+            if appid ~= nil and not is_placeholder_app_name(name, appid) then
                 map[tostring(appid)] = trim(name)
             end
         end
@@ -1253,7 +1292,7 @@ end
 local function save_name_cache_map(map)
     local cache = {}
     for appid, name in pairs(map or {}) do
-        if trim(name) ~= "" then
+        if not is_placeholder_app_name(name, appid) then
             cache[tostring(appid)] = {
                 AppId = tonumber(appid) or appid,
                 Name = trim(name)
@@ -1332,21 +1371,7 @@ local function resolve_missing_names(appids, names)
 end
 
 local function is_placeholder_game_name(name, appid)
-    local value = trim(name)
-    local id = tostring(appid or "")
-    if value == "" then
-        return true
-    end
-    if id ~= "" and value == id then
-        return true
-    end
-    if id ~= "" and value:lower() == ("appid " .. id):lower() then
-        return true
-    end
-    if value:lower():match("^appid%s+%d+$") ~= nil then
-        return true
-    end
-    return false
+    return is_placeholder_app_name(name, appid)
 end
 
 local function resolve_game_name_for_appid(appid, candidate)
@@ -1598,6 +1623,17 @@ local function installed_direct()
         end
     end
 
+    local missing_appids = {}
+    for _, script in ipairs(scripts) do
+        local id = tostring(tonumber(script.appId or script.appid or 0) or 0)
+        local metadata = steam_game_metadata(id)
+        local manifest_name = metadata ~= nil and trim(metadata.gameName or metadata.name) or ""
+        if manifest_name == "" and trim(names[id]) == "" and trim(record_names[id]) == "" then
+            table.insert(missing_appids, id)
+        end
+    end
+    names = resolve_missing_names(missing_appids, names)
+
     local names_dirty = false
     for _, script in ipairs(scripts) do
         script.appId = tonumber(script.appId or script.appid or 0) or 0
@@ -1609,7 +1645,7 @@ local function installed_direct()
             names[id] = manifest_name
             names_dirty = true
         end
-        script.gameName = record_names[id] or names[id] or (manifest_name ~= "" and manifest_name or "AppID " .. id)
+        script.gameName = manifest_name ~= "" and manifest_name or names[id] or record_names[id] or "AppID " .. id
         script.name = script.gameName
         script.dlcCount = tonumber(script.dlcCount or script.DlcCount or script.dlc_count or 0) or 0
         if script.dlcCount <= 0 and trim(script.fullPath) ~= "" then
@@ -1796,9 +1832,9 @@ local function apis_direct()
         morrenusApiKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")),
         apiOrder = clean_api_order(api_order, custom, nil),
         builtIn = {
-            native_api("skyapi", "SkyAPI", false, "https://raw.githubusercontent.com/skyflarefox/Skyapi/refs/heads/main/<appid>.zip"),
+            native_api("skyapi", "SkyAPI", false, "https://raw.githubusercontent.com/skyflarefox/Skyapi/main/<appid>.zip"),
             native_api("morrenus", "Morrenus", true, "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>"),
-            native_api("sushi", "Sushi", false, "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/refs/heads/main/<appid>.zip")
+            native_api("sushi", "Sushi", false, "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/main/<appid>.zip")
         },
         custom = custom
     }
@@ -1862,12 +1898,12 @@ local function remove_game_direct(payload)
     payload = normalize_payload(payload)
     local appid = payload_appid(payload)
     if appid == nil or appid <= 0 then
-        return { success = false, error = "AppID invalido." }
+        return { success = false, error = "AppID inválido." }
     end
 
     local steam_path = detect_steam_path()
     if steam_path == "" then
-        return { success = false, error = "Steam nao encontrada." }
+        return { success = false, error = "Steam não encontrada." }
     end
 
     local dirs = {
@@ -1998,15 +2034,15 @@ local function save_api_settings_direct(payload)
     if type(api_order) == "table" or type(api_order) == "string" then
         settings.ApiOrder = clean_api_order(api_order, custom, nil)
     else
-        return { success = false, error = "Ordem das APIs nao recebida pelo backend." }
+        return { success = false, error = "Ordem das APIs não recebida pelo backend." }
     end
     if not write_json(settings_path(), settings) then
-        return { success = false, error = "Nao foi possivel gravar settings.json." }
+        return { success = false, error = "Não foi possível gravar settings.json." }
     end
     local saved_settings = read_json(settings_path(), {})
     local saved_order = clean_api_order(get_prop(saved_settings, "ApiOrder", "apiOrder", {}), custom, nil)
     if not same_string_array(saved_order, settings.ApiOrder) then
-        return { success = false, error = "A ordem das APIs nao foi persistida em settings.json." }
+        return { success = false, error = "A ordem das APIs não foi persistida em settings.json." }
     end
     cache_clear()
     return apis_direct()
@@ -2079,7 +2115,7 @@ local function backup_restore_direct(payload)
     local backup = get_prop(payload, "backup", "Backup", payload)
     local games = get_prop(backup, "games", "Games", {})
     if type(games) ~= "table" then
-        return { success = false, error = "Backup invalido." }
+        return { success = false, error = "Backup inválido." }
     end
 
     local installed = {}
@@ -2139,23 +2175,29 @@ function run_wscript_installer(payload)
     payload = normalize_payload(payload)
     local appid = payload_appid(payload)
     if appid == nil or appid <= 0 then
-        return { success = false, error = "AppID invalido.", details = "Payload recebido: " .. json_encode(payload) }
+        return { success = false, error = "AppID inválido.", details = "Payload recebido: " .. json_encode(payload) }
     end
 
     local installer = installer_path()
     if not is_file(installer) then
-        return { success = false, error = "Instalador interno nao encontrado: " .. installer }
+        return { success = false, error = "Instalador interno não encontrado: " .. installer }
     end
 
     local steam_path = detect_steam_path()
     if steam_path == "" then
-        return { success = false, error = "Steam nao encontrada." }
+        return { success = false, error = "Steam não encontrada." }
     end
 
     local settings = load_settings()
     local root = data_root()
 
     local app_name = resolve_game_name_for_appid(appid, get_prop(payload, "name", "gameName", ""))
+    if is_placeholder_game_name(app_name, appid) then
+        local resolved = resolve_missing_names({ tostring(appid) }, name_cache_map())
+        if type(resolved) == "table" and not is_placeholder_game_name(resolved[tostring(appid)], appid) then
+            app_name = trim(resolved[tostring(appid)])
+        end
+    end
 
     local result_path = job_result_path("add-" .. tostring(appid))
     delete_file(result_path)
@@ -2190,7 +2232,7 @@ function run_wscript_installer(payload)
     if not ok then
         return {
             success = false,
-            error = "Nao foi possivel iniciar o instalador interno. Verifique se o Windows Script Host esta habilitado."
+            error = "Não foi possível iniciar o instalador interno. Verifique se o Windows Script Host está habilitado."
         }
     end
 
@@ -2203,7 +2245,7 @@ function run_wscript_installer(payload)
     if not is_file(result_path) then
         return {
             success = false,
-            error = "O instalador interno nao respondeu a tempo.",
+            error = "O instalador interno não respondeu a tempo.",
             details = tostring(exec_result or "")
         }
     end
@@ -2280,10 +2322,10 @@ Get-WmiObject -Class Win32_IP4RouteTable |
   Select-Object -ExpandProperty interfaceindex |
   Set-DnsClientServerAddress -ServerAddresses ('1.1.1.1', '1.0.0.1')
 ]]
-        message = "DNS Cloudflare iniciado. Confirme a permissao do Windows se aparecer."
+        message = "DNS Cloudflare iniciado. Confirme a permissão do Windows se aparecer."
     elseif repair == "error54" then
         if steam_path == "" then
-            return { success = false, error = "Steam nao encontrada." }
+            return { success = false, error = "Steam não encontrada." }
         end
         local appcache = join_path(steam_path, "appcache")
         script = "$ErrorActionPreference = 'SilentlyContinue'\r\n" ..
@@ -2301,7 +2343,7 @@ Get-WmiObject -Class Win32_IP4RouteTable |
             "$file = " .. ps_quote(exe_path) .. "\r\n" ..
             "Invoke-WebRequest 'https://github.com/abbodi1406/vcredist/releases/latest/download/VisualCppRedist_AIO_x86_x64.exe' -OutFile $file\r\n" ..
             "Start-Process -FilePath $file -ArgumentList '/ai /gm2' -Wait\r\n"
-        message = "Instalador Visual C++ iniciado. Confirme a permissao do Windows se aparecer."
+        message = "Instalador Visual C++ iniciado. Confirme a permissão do Windows se aparecer."
     else
         return { success = false, error = "Reparo desconhecido: " .. tostring(repair) }
     end
@@ -2310,7 +2352,7 @@ Get-WmiObject -Class Win32_IP4RouteTable |
     write_file(path, script)
     local ok = elevated and launch_elevated_powershell(path) or run_powershell_script(path)
     if not ok then
-        return { success = false, error = "Nao foi possivel iniciar o reparo externo." }
+        return { success = false, error = "Não foi possível iniciar o reparo externo." }
     end
     return { success = true, data = { repair = repair, scriptPath = path, elevated = elevated, message = message }, error = "" }
 end
@@ -2318,8 +2360,9 @@ end
 local function find_fix_sources_direct(payload)
     payload = normalize_payload(payload)
     local appid = tostring(payload_appid(payload))
-    local name = trim(get_prop(payload, "name", "gameName", appid))
+    local name = resolve_game_name_for_appid(appid, get_prop(payload, "name", "gameName", appid))
     local game_path = trim(get_prop(payload, "gamePath", "installPath", ""))
+    local requested_kind = trim(get_prop(payload, "kind", "type", ""))
     if game_path == "" then
         game_path = steam_game_install_path(appid)
     end
@@ -2335,7 +2378,8 @@ local function find_fix_sources_direct(payload)
             quote_arg(helper),
             quote_arg(result_path),
             quote_arg(appid),
-            quote_arg(name)
+            quote_arg(name),
+            quote_arg(requested_kind)
         }, " ")
         run_minimized_command(command, false)
         local waited = 0
@@ -2355,7 +2399,7 @@ local function find_fix_sources_direct(payload)
 
     for _, source in ipairs(sources) do
         if type(source) == "table" then
-            source.provider = trim(get_prop(source, "provider", "Provider", "Ryuu"))
+            source.provider = trim(get_prop(source, "provider", "Provider", "Sky"))
             source.action = "apply"
             source.gamePath = game_path
         end
@@ -2372,10 +2416,10 @@ local function simple_fix_sources(payload, kind)
     local appid = tostring(get_prop(payload, "appid", "appId", ""))
     local name = trim(get_prop(payload, "name", "gameName", appid))
     if kind == "online" then
-        return { success = false, error = "OnlineFix foi removido do SkyTools. Use as correcoes Ryuu." }
+        return find_fix_sources_direct({ appid = appid, name = name, kind = "online" })
     end
     if kind == "denuvo" then
-        return find_fix_sources_direct({ appid = appid, name = name })
+        return { gamePath = "", sources = {} }
     end
     return { gamePath = "", sources = {} }
 end
@@ -2389,6 +2433,39 @@ local function archive_extension(value)
     end
     return ""
 end
+
+local function sky_fix_file_name(appid, source, payload)
+    local source_file = trim(get_first_prop(source, { "fileName", "filename", "FileName", "file", "File" }, ""))
+    if archive_extension(source_file) ~= "" then
+        return source_file
+    end
+
+    local payload_file = trim(get_first_prop(payload, { "fileName", "filename", "sourceFileName", "SourceFileName" }, ""))
+    if archive_extension(payload_file) ~= "" then
+        return payload_file
+    end
+
+    local source_name = trim(get_first_prop(source, { "name", "title" }, get_prop(payload, "sourceName", "")))
+    if archive_extension(source_name) ~= "" then
+        return source_name
+    end
+
+    local kind = trim(get_first_prop(source, { "kind", "type", "Type" }, get_prop(payload, "sourceKind", "sourceType", ""))):lower()
+    local label = trim(get_first_prop(source, { "displayName", "DisplayName", "name", "title" }, get_first_prop(payload, { "displayName", "sourceName" }, ""))):lower()
+    if kind == "" then
+        kind = label
+    end
+    if kind:find("online", 1, true) ~= nil then
+        return tostring(appid) .. "_online.zip"
+    end
+    if kind:find("generic", 1, true) ~= nil or kind:find("generica", 1, true) ~= nil or kind:find("genérica", 1, true) ~= nil then
+        return tostring(appid) .. "_generic.zip"
+    end
+
+    return ""
+end
+
+local cleanup_fix_residuals
 
 local function apply_fix_direct(payload)
     payload = normalize_payload(payload)
@@ -2417,20 +2494,50 @@ local function apply_fix_direct(payload)
             source.downloadUrl = url
             source.name = trim(get_first_prop(source, { "name", "title" }, get_first_prop(payload, { "sourceName", "name" }, "")))
             source.type = trim(get_first_prop(source, { "type" }, get_first_prop(payload, { "sourceType", "type" }, "")))
-            source.provider = trim(get_first_prop(source, { "provider" }, get_prop(payload, "provider", "Ryuu")))
+            source.provider = trim(get_first_prop(source, { "provider" }, get_prop(payload, "provider", "Sky")))
             source.size = trim(get_first_prop(source, { "size" }, get_prop(payload, "size", "")))
         end
     end
     if url == "" then
-        local source_name = trim(get_first_prop(source, { "name", "title" }, get_prop(payload, "sourceName", "")))
-        if archive_extension(source_name) ~= "" then
-            url = "https://generator.ryuu.lol/fixes/" .. source_name:gsub(" ", "%%20")
-            source.downloadUrl = url
-            source.name = source_name
+        local file_name = sky_fix_file_name(appid, source, payload)
+        if archive_extension(file_name) ~= "" then
+            local lower_name = file_name:lower()
+            if lower_name == appid .. "_online.zip" or lower_name == appid .. "_generic.zip" then
+                url = "https://github.com/skyflarefox/fix/releases/download/fix/" .. file_name:gsub(" ", "%%20")
+                source.downloadUrl = url
+                source.fileName = file_name
+                source.provider = trim(get_prop(source, "provider", "Provider", "Sky"))
+            end
         end
     end
     if url == "" then
-        return { success = false, error = "Fonte sem link para abrir." }
+        local requested_kind = ""
+        local inferred_file = sky_fix_file_name(appid, source, payload)
+        local inferred_lower = inferred_file:lower()
+        if inferred_lower == appid .. "_online.zip" then
+            requested_kind = "online"
+        elseif inferred_lower == appid .. "_generic.zip" then
+            requested_kind = "generic"
+        end
+
+        local lookup = find_fix_sources_direct({ appid = appid, name = name, kind = requested_kind })
+        local found = type(lookup) == "table" and lookup.sources or nil
+        if type(found) == "table" then
+            for _, item in ipairs(found) do
+                local candidate_url = trim(get_first_prop(item, { "downloadUrl", "DownloadUrl", "sourceUrl", "SourceUrl", "url", "Url", "href", "link" }, ""))
+                if candidate_url ~= "" and archive_extension(candidate_url) ~= "" then
+                    source = item
+                    url = candidate_url
+                    if game_path == "" then
+                        game_path = trim(get_prop(item, "gamePath", "installPath", ""))
+                    end
+                    break
+                end
+            end
+        end
+    end
+    if url == "" then
+        return { success = false, error = "Fonte sem link para abrir. Nenhum pacote Sky encontrado para AppID " .. appid .. "." }
     end
     if game_path == "" then
         game_path = trim(get_prop(source, "gamePath", "installPath", ""))
@@ -2445,93 +2552,79 @@ local function apply_fix_direct(payload)
     if extension == "" then
         return {
             success = false,
-            error = "Aplicacao automatica suporta apenas pacotes .zip, .rar e .7z.",
+            error = "Aplicacão automática suporta apenas pacotes .zip, .rar e .7z.",
             url = url
         }
     end
     if game_path == "" then
-        return { success = false, error = "Pasta instalada do jogo nao encontrada." }
+        return { success = false, error = "Pasta instalada do jogo não encontrada." }
     end
 
     local script_path = join_path(data_root(), "skytools-apply-fix-" .. appid .. ".ps1")
     local package_path = join_path(data_root(), "skytools-fix-" .. appid .. "." .. extension)
     local extract_path = join_path(data_root(), "skytools-fix-" .. appid .. "-extract")
-    local backup_path = join_path(data_root(), "fix-backups\\" .. appid .. "\\" .. tostring(os.time()))
-    local log_path = join_path(game_path, "skytools-fix-log-" .. appid .. ".log")
+    delete_file(script_path)
+    delete_file(package_path)
     local source_type = trim(get_prop(source, "type", "Type", "Fix"))
+    local source_provider = trim(get_prop(source, "provider", "Provider", "Sky"))
     local script = table.concat({
         "$ErrorActionPreference = 'Stop'",
-        "$url = " .. ps_quote(url),
-        "$appid = " .. ps_quote(appid),
-        "$game = " .. ps_quote(name ~= "" and name or ("AppID " .. appid)),
-        "$sourceType = " .. ps_quote(source_type ~= "" and source_type or "Fix"),
-        "$gamePath = " .. ps_quote(game_path),
-        "$package = " .. ps_quote(package_path),
-        "$extract = " .. ps_quote(extract_path),
-        "$backup = " .. ps_quote(backup_path),
-        "$log = " .. ps_quote(log_path),
-        "if (!(Test-Path -LiteralPath $gamePath)) { throw 'Pasta do jogo nao encontrada.' }",
-        "Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue",
-        "New-Item -ItemType Directory -Path (Split-Path -Parent $package) -Force | Out-Null",
-        "New-Item -ItemType Directory -Path $extract -Force | Out-Null",
-        "Invoke-WebRequest -Uri $url -OutFile $package",
-        "$ext = [IO.Path]::GetExtension($package).ToLowerInvariant()",
-        "function Expand-FixArchive {",
-        "  if ($ext -eq '.zip') {",
-        "    try { Expand-Archive -LiteralPath $package -DestinationPath $extract -Force; return } catch { }",
+        "try {",
+        "  $url = " .. ps_quote(url),
+        "  $gamePath = " .. ps_quote(game_path),
+        "  $package = " .. ps_quote(package_path),
+        "  $extract = " .. ps_quote(extract_path),
+        "  if (!(Test-Path -LiteralPath $gamePath)) { throw 'Pasta do jogo não encontrada.' }",
+        "  Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue",
+        "  Remove-Item -LiteralPath $package -Force -ErrorAction SilentlyContinue",
+        "  New-Item -ItemType Directory -Path (Split-Path -Parent $package) -Force | Out-Null",
+        "  New-Item -ItemType Directory -Path $extract -Force | Out-Null",
+        "  Start-BitsTransfer -Source $url -Destination $package -TransferType Download | Out-Null", -- fixed tempo para baixar 
+        "  $ext = [IO.Path]::GetExtension($package).ToLowerInvariant()",
+        "  function Expand-FixArchive {",
+        "    if ($ext -eq '.zip') {",
+        "      try { Expand-Archive -LiteralPath $package -DestinationPath $extract -Force; return } catch { Write-Host $_; Start-Sleep -Seconds 5; exit 1 }",
+        "    }",
+        "    $tar = (Get-Command tar.exe -ErrorAction SilentlyContinue).Source",
+        "    if ($tar) {",
+        "      & $tar -xf $package -C $extract",
+        "      if ($LASTEXITCODE -eq 0) { return }",
+        "    }",
+        "    $candidates = @(",
+        "      (Join-Path $env:ProgramFiles '7-Zip\\7z.exe'),",
+        "      (Join-Path ${env:ProgramFiles(x86)} '7-Zip\\7z.exe'),",
+        "      (Join-Path (Split-Path -Parent $package) '7z.exe')",
+        "    )",
+        "    $seven = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1",
+        "    if (!$seven) { throw 'Não foi possível extrair o pacote. Instale o 7-Zip ou use Windows com tar.exe/libarchive.' }",
+        "    & $seven x $package ('-o' + $extract) -y | Out-Null",
+        "    if ($LASTEXITCODE -ne 0) { throw '7-Zip não conseguiu extrair o pacote.' }",
         "  }",
-        "  $tar = (Get-Command tar.exe -ErrorAction SilentlyContinue).Source",
-        "  if ($tar) {",
-        "    & $tar -xf $package -C $extract",
-        "    if ($LASTEXITCODE -eq 0) { return }",
+        "  Expand-FixArchive",
+        "  $sourceRoot = $extract",
+        "  $gameRoot = [IO.Path]::GetFullPath($gamePath).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
+        "  $sourceRootFull = [IO.Path]::GetFullPath($sourceRoot).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
+        "  $files = Get-ChildItem -LiteralPath $sourceRoot -File -Recurse",
+        "  if (!$files -or $files.Count -eq 0) { throw 'Pacote de correção vazio.' }",
+        "  foreach ($file in $files) {",
+        "    $fileFull = [IO.Path]::GetFullPath($file.FullName)",
+        "    if (!$fileFull.StartsWith($sourceRootFull, [StringComparison]::OrdinalIgnoreCase)) { continue }",
+        "    $relative = $fileFull.Substring($sourceRootFull.Length)",
+        "    $dest = [IO.Path]::GetFullPath((Join-Path $gameRoot $relative))",
+        "    if (!$dest.StartsWith($gameRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }",
+        "    New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null",
+        "    Copy-Item -LiteralPath $file.FullName -Destination $dest -Force",
         "  }",
-        "  $candidates = @(",
-        "    (Join-Path $env:ProgramFiles '7-Zip\\7z.exe'),",
-        "    (Join-Path ${env:ProgramFiles(x86)} '7-Zip\\7z.exe'),",
-        "    (Join-Path (Split-Path -Parent $package) '7z.exe')",
-        "  )",
-        "  $seven = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1",
-        "  if (!$seven) { throw 'Nao foi possivel extrair o pacote. Instale o 7-Zip ou use Windows com tar.exe/libarchive.' }",
-        "  & $seven x $package ('-o' + $extract) -y | Out-Null",
-        "  if ($LASTEXITCODE -ne 0) { throw '7-Zip nao conseguiu extrair o pacote.' }",
-        "}",
-        "Expand-FixArchive",
-        "$sourceRoot = $extract",
-        "$appidDir = Join-Path $extract $appid",
-        "if (Test-Path -LiteralPath $appidDir) { $sourceRoot = $appidDir }",
-        "else {",
-        "  $topFiles = @(Get-ChildItem -LiteralPath $extract -File -Force)",
-        "  $topDirs = @(Get-ChildItem -LiteralPath $extract -Directory -Force)",
-        "  if ($topFiles.Count -eq 0 -and $topDirs.Count -eq 1) { $sourceRoot = $topDirs[0].FullName }",
-        "}",
-        "$gameRoot = [IO.Path]::GetFullPath($gamePath).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
-        "$sourceRootFull = [IO.Path]::GetFullPath($sourceRoot).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar",
-        "$files = Get-ChildItem -LiteralPath $sourceRoot -File -Recurse",
-        "if (!$files -or $files.Count -eq 0) { throw 'Pacote de correcao vazio.' }",
-        "New-Item -ItemType Directory -Path $backup -Force | Out-Null",
-        "$written = @()",
-        "foreach ($file in $files) {",
-        "  $fileFull = [IO.Path]::GetFullPath($file.FullName)",
-        "  if (!$fileFull.StartsWith($sourceRootFull, [StringComparison]::OrdinalIgnoreCase)) { continue }",
-        "  $relative = $fileFull.Substring($sourceRootFull.Length)",
-        "  $dest = [IO.Path]::GetFullPath((Join-Path $gameRoot $relative))",
-        "  if (!$dest.StartsWith($gameRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }",
-        "  if (Test-Path -LiteralPath $dest) {",
-        "    $backupDest = Join-Path $backup $relative",
-        "    New-Item -ItemType Directory -Path (Split-Path -Parent $backupDest) -Force | Out-Null",
-        "    Copy-Item -LiteralPath $dest -Destination $backupDest -Force",
-        "  }",
-        "  New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null",
-        "  Copy-Item -LiteralPath $file.FullName -Destination $dest -Force",
-        "  $written += $relative",
-        "}",
-        "$entry = @('[FIX]', 'Date: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), 'Game: ' + $game, 'Provider: Ryuu', 'Type: ' + $sourceType, 'Download URL: ' + $url, 'Backup: ' + $backup, 'Files:') + $written + @('[/FIX]', '')",
-        "Add-Content -LiteralPath $log -Value $entry -Encoding UTF8"
+        "} finally {",
+        "  Remove-Item -LiteralPath " .. ps_quote(extract_path) .. " -Recurse -Force -ErrorAction SilentlyContinue",
+        "  Remove-Item -LiteralPath " .. ps_quote(package_path) .. " -Force -ErrorAction SilentlyContinue",
+        "  if ($PSCommandPath) { Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue }",
+        "}"
     }, "\r\n")
     write_file(script_path, script)
     local ok = run_powershell_script(script_path)
     if not ok then
-        return { success = false, error = "Nao foi possivel iniciar a aplicacao da correcao." }
+        return { success = false, error = "Não foi possível iniciar a aplicação da correção." }
     end
 
     local records_path = join_path(data_root(), "fix-actions.json")
@@ -2545,6 +2638,7 @@ local function apply_fix_direct(payload)
         source = source,
         url = url,
         type = source_type,
+        provider = source_provider,
         gamePath = game_path,
         createdAt = os.date("%Y-%m-%dT%H:%M:%S")
     })
@@ -2555,8 +2649,71 @@ local function apply_fix_direct(payload)
         name = name,
         url = url,
         type = source_type,
+        provider = source_provider,
         gamePath = game_path,
-        message = "Correcao Ryuu iniciada em segundo plano."
+        message = "Correção Sky Aplicada."
+    }
+end
+
+function cleanup_fix_residuals(appid)
+    local root = data_root()
+    local id = tostring(appid or "")
+    if id == "" then
+        return
+    end
+
+    delete_file(join_path(root, "skytools-apply-fix-" .. id .. ".ps1"))
+    delete_file(join_path(root, "skytools-fix-" .. id .. ".zip"))
+    delete_file(join_path(root, "skytools-fix-" .. id .. ".rar"))
+    delete_file(join_path(root, "skytools-fix-" .. id .. ".7z"))
+
+    local extract_path = join_path(root, "skytools-fix-" .. id .. "-extract")
+    local backup_path = join_path(root, "fix-backups\\" .. id)
+    local command = table.concat({
+        "powershell.exe",
+        "-WindowStyle",
+        "Hidden",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        quote_arg(
+            "Remove-Item -LiteralPath " .. ps_quote(extract_path) .. " -Recurse -Force -ErrorAction SilentlyContinue; " ..
+            "Remove-Item -LiteralPath " .. ps_quote(backup_path) .. " -Recurse -Force -ErrorAction SilentlyContinue"
+        )
+    }, " ")
+    run_minimized_command(command, false)
+end
+
+local function remove_fix_direct(payload)
+    payload = normalize_payload(payload)
+    local appid = tostring(payload_appid(payload))
+    if appid == "" or appid == "0" then
+        return { success = false, error = "AppID inválido para remover correção." }
+    end
+
+    cleanup_fix_residuals(appid)
+
+    local records_path = join_path(data_root(), "fix-actions.json")
+    local records = read_json(records_path, {})
+    local kept = {}
+    local removed = 0
+    if type(records) == "table" then
+        for _, record in ipairs(records) do
+            if type(record) == "table" and tostring(get_prop(record, "appId", "appid", "AppId", "")) == appid then
+                removed = removed + 1
+            else
+                table.insert(kept, record)
+            end
+        end
+    end
+    write_json(records_path, kept)
+
+    return {
+        appId = tonumber(appid) or appid,
+        removed = removed,
+        validateUrl = "steam://validate/" .. appid,
+        message = "Registro da correção removido. Verificação da integridade iniciada pela Steam."
     }
 end
 
@@ -2604,6 +2761,10 @@ local function dispatch_inline(method, payload)
     if method == "repair" then return response_from_result(run_repair_direct(payload)) end
     if method == "apply-fix" then
         local result = apply_fix_direct(payload)
+        return response_from_result(result)
+    end
+    if method == "remove-fix" then
+        local result = remove_fix_direct(payload)
         return response_from_result(result)
     end
     if method == "integration" then return response_from_result(integration_direct(payload)) end
@@ -2695,6 +2856,10 @@ end
 
 function SkyToolsApplyFix(payload)
     return worker_call("apply-fix", payload or {}, 60)
+end
+
+function SkyToolsRemoveFix(payload)
+    return worker_call("remove-fix", payload or {}, 60)
 end
 
 function SkyToolsRepair(payload)
@@ -2796,6 +2961,14 @@ function skytools_apply_fix(params, name, game_path, source)
     return SkyToolsApplyFix({ appid = params, name = name, gamePath = game_path, source = source or {} })
 end
 _G["skytools_apply_fix"] = skytools_apply_fix
+
+function skytools_remove_fix(params, name)
+    if type(params) == "table" then
+        return SkyToolsRemoveFix(params)
+    end
+    return SkyToolsRemoveFix({ appid = params, name = name })
+end
+_G["skytools_remove_fix"] = skytools_remove_fix
 
 function skytools_online_fix(params, name)
     if type(params) == "table" then

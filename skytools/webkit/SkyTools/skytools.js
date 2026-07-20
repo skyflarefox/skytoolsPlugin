@@ -46,10 +46,12 @@
     backup: null,
     fixResults: null,
     fixQuery: "",
+    fixVisibleCount: 80,
+    fixMatchedCount: 0,
     selectedFixGame: null,
     lastResult: null,
     activityTitle: "Pronto",
-    activityDetail: "Aguardando uma acao.",
+    activityDetail: "Aguardando uma ação.",
     activityKind: "idle"
   };
 
@@ -109,7 +111,7 @@
 
   function call(method, payload) {
     if (typeof Millennium === "undefined" || typeof Millennium.callServerMethod !== "function") {
-      return Promise.reject(new Error("Millennium bridge indisponivel"));
+      return Promise.reject(new Error("Millennium bridge indisponível"));
     }
     return Millennium.callServerMethod(PLUGIN_ID, method, payload || {}).then(parseResponse);
   }
@@ -314,9 +316,9 @@
 
   function friendlyError(result) {
     if (!result) {
-      return "A acao falhou.";
+      return "A ação falhou.";
     }
-    return result.error || result.message || "A acao falhou.";
+    return result.error || result.message || "A ação falhou.";
   }
 
   function setActivity(kind, title, detail) {
@@ -360,7 +362,7 @@
   function clearBusy(title, detail, kind) {
     state.busy = false;
     if (title !== false) {
-      setActivity(kind || "idle", title || "Pronto", detail || "Aguardando uma acao.");
+      setActivity(kind || "idle", title || "Pronto", detail || "Aguardando uma ação.");
     }
     updateBusyState();
   }
@@ -620,11 +622,11 @@
       var useProxy = api.useProxy === true || api.UseProxy === true;
       var success = api.successCode || api.SuccessCode || 200;
       var unavailable = api.unavailableCode || api.UnavailableCode || 404;
-      var detail = (enabled ? "Ativa" : "Desativada") + " · " + (nativeApi ? "API padrao" : "API personalizada") + " · HTTP " + success + "/" + unavailable + (useProxy ? " · proxy" : "");
+      var detail = (enabled ? "Ativa" : "Desativada") + " · " + (nativeApi ? "API padrão" : "API personalizada") + " · HTTP " + success + "/" + unavailable + (useProxy ? " · proxy" : "");
       return [
         '<div class="skytools-custom-api-row skytools-api-draggable ' + (state.apiForm && state.apiForm.id === id ? "selected" : "") + '" draggable="true" data-api-id="' + escapeHtml(id) + '">',
         '  <span class="skytools-drag-handle" title="Arrastar para ordenar">' + icon("api") + '</span>',
-        '  <div class="skytools-row-main"><strong>' + escapeHtml(name) + '</strong><span>' + escapeHtml(url || "URL nao configurada") + '</span><small>' + escapeHtml(detail) + '</small></div>',
+        '  <div class="skytools-row-main"><strong>' + escapeHtml(name) + '</strong><span>' + escapeHtml(url || "URL não configurada") + '</span><small>' + escapeHtml(detail) + '</small></div>',
         '  <div class="skytools-row-actions">',
         '    <button type="button" class="skytools-row-action" title="Editar API" data-action="api-edit" data-api-id="' + escapeHtml(id) + '">' + icon("pencil") + '</button>',
         '    <button type="button" class="skytools-row-action skytools-danger-action" title="Excluir API" data-action="api-delete" data-api-id="' + escapeHtml(id) + '">' + icon("trash") + '</button>',
@@ -651,7 +653,7 @@
         '  <div class="skytools-field"><label>URL do proxy</label><input class="skytools-input" data-field="apiProxyUrl" placeholder="https://proxy.exemplo.com/?url=<url>" value="' + escapeHtml(form.proxyUrlTemplate || "") + '"></div>',
         '  <div class="skytools-form-row">',
         '    <div class="skytools-field"><label>HTTP sucesso</label><input class="skytools-input" type="number" min="100" max="599" data-field="apiSuccessCode" value="' + escapeHtml(form.successCode || 200) + '"></div>',
-        '    <div class="skytools-field"><label>HTTP indisponivel</label><input class="skytools-input" type="number" min="100" max="599" data-field="apiUnavailableCode" value="' + escapeHtml(form.unavailableCode || 404) + '"></div>',
+        '    <div class="skytools-field"><label>HTTP indisponível</label><input class="skytools-input" type="number" min="100" max="599" data-field="apiUnavailableCode" value="' + escapeHtml(form.unavailableCode || 404) + '"></div>',
         '  </div>',
         '  <div class="skytools-button-row">',
         '    <button type="button" data-action="api-save">' + icon("check") + '<span>Salvar API</span></button>',
@@ -680,26 +682,40 @@
 
   function sourceUrl(source) {
     source = source || {};
-    return source.downloadUrl || source.DownloadUrl || source.sourceUrl || source.SourceUrl || source.url || source.Url || source.href || source.link || "";
+    return source.downloadUrl || source.DownloadUrl || source.downloadURL || source.sourceUrl || source.SourceUrl || source.url || source.Url || source.href || source.link || "";
   }
 
   function looksLikeArchive(value) {
     return /\.(zip|rar|7z)(?:\?|$)/i.test(String(value || ""));
   }
 
+  function formatFixLabel(source) {
+    source = source || {};
+    if (source.displayName) return source.displayName;
+    var name = source.name || source.title || source.fileName || source.provider || "Fonte";
+    var type = source.type || "";
+    var size = source.size || "";
+    var provider = source.provider || "Sky";
+    var label = name;
+    if (type) label += " - " + type;
+    if (size) label += " - " + size;
+    if (provider) label += " (" + provider + ")";
+    return label;
+  }
+
   function renderFixResults() {
     var sources = sourceArray(state.fixResults);
     if (!sources.length) {
-      return '<div class="skytools-empty">Nenhuma correcao Ryuu carregada.</div>';
+      return '<div class="skytools-empty">Nenhuma correção Sky carregada.</div>';
     }
     return sources.map(function (source, index) {
-      var title = source.name || source.title || source.provider || "Fonte";
-      var detail = [source.provider, source.type, source.size].filter(Boolean).join(" · ");
+      var title = formatFixLabel(source);
+      var detail = source.fileName || [source.provider, source.type, source.size].filter(Boolean).join(" · ");
       var url = sourceUrl(source);
       var canApply = looksLikeArchive(url) || looksLikeArchive(title);
       var actionButton = canApply
         ? '  <button type="button" class="skytools-row-action" title="Aplicar na pasta do jogo" data-action="fix-prepare" data-source-index="' + index + '">' + icon("check") + '</button>'
-        : '  <button type="button" class="skytools-row-action" title="Pacote nao suportado" disabled>' + icon("error") + '</button>';
+        : '  <button type="button" class="skytools-row-action" title="Pacote não suportado" disabled>' + icon("error") + '</button>';
       return [
         '<div class="skytools-list-row">',
         '  <div class="skytools-row-icon">' + icon("fixes") + '</div>',
@@ -713,6 +729,7 @@
   function renderFixGamePicker() {
     var list = gameArray(state.fixGames);
     var query = String(state.fixQuery || "").toLowerCase();
+    var visibleLimit = Math.max(40, Number(state.fixVisibleCount || 80));
     if (!list.length) {
       if (state.fixGamesLoading) {
         return '<div class="skytools-empty">Carregando jogos instalados...</div>';
@@ -722,6 +739,7 @@
     }
 
     var rows = [];
+    var matched = 0;
     for (var i = 0; i < list.length; i += 1) {
       var game = list[i];
       var appid = gameAppId(game);
@@ -729,17 +747,26 @@
       if (query && (String(name).toLowerCase().indexOf(query) < 0 && String(appid).indexOf(query) < 0)) {
         continue;
       }
+      matched += 1;
+      if (rows.length >= visibleLimit) {
+        continue;
+      }
+      var removeButton = game.hasAppliedFix
+        ? '  <button type="button" class="skytools-row-action" title="Remover correção e verificar integridade" data-action="fix-remove" data-appid="' + escapeHtml(appid) + '" data-name="' + escapeHtml(name) + '">' + icon("trash") + '</button>'
+        : "";
       rows.push([
         '<div class="skytools-list-row">',
         '  <div class="skytools-row-icon">' + icon("library") + '</div>',
         '  <div class="skytools-row-main"><strong>' + escapeHtml(name) + '</strong><span>AppID ' + escapeHtml(appid) + '</span></div>',
-        '  <button type="button" class="skytools-row-action" title="Buscar correcoes" data-action="fix-game" data-appid="' + escapeHtml(appid) + '" data-name="' + escapeHtml(name) + '" data-game-path="' + escapeHtml(game.gamePath || game.installPath || "") + '">' + icon("fixes") + '</button>',
+        removeButton,
+        '  <button type="button" class="skytools-row-action" title="Buscar correções" data-action="fix-game" data-appid="' + escapeHtml(appid) + '" data-name="' + escapeHtml(name) + '" data-game-path="' + escapeHtml(game.gamePath || game.installPath || "") + '">' + icon("fixes") + '</button>',
         '</div>'
       ].join(""));
-      if (rows.length >= 12) {
-        break;
-      }
     }
+    if (matched > rows.length) {
+      rows.push('<button type="button" class="skytools-load-more" data-action="fix-load-more">Mostrar mais ' + escapeHtml(String(Math.min(120, matched - rows.length))) + ' de ' + escapeHtml(String(matched - rows.length)) + '</button>');
+    }
+    state.fixMatchedCount = matched;
     return rows.length ? rows.join("") : '<div class="skytools-empty">Nenhum jogo encontrado com esse filtro.</div>';
   }
 
@@ -779,9 +806,9 @@
 
     if (tab === "correcoes") {
       return [
-        '<div class="skytools-section-head"><strong>Correcoes para jogo</strong><button data-action="refresh-fix-games" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
+        '<div class="skytools-section-head"><strong>Correções para jogo</strong><button data-action="refresh-fix-games" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
         '<div class="skytools-field"><label>Buscar jogo instalado</label><input class="skytools-input" data-field="fixSearch" placeholder="Digite nome ou AppID" value="' + escapeHtml(state.fixQuery || "") + '"></div>',
-        '<div class="skytools-list" data-role="fix-game-list">' + renderFixGamePicker() + '</div>',
+        '<div class="skytools-list skytools-scroll-list skytools-fix-game-list" data-role="fix-game-list">' + renderFixGamePicker() + '</div>',
         '<div class="skytools-section-head"><strong>' + escapeHtml(state.selectedFixGame ? ("Resultados para " + state.selectedFixGame.name) : "Resultados") + '</strong></div>',
         '<div class="skytools-list">' + renderFixResults() + '</div>'
       ].join("");
@@ -796,10 +823,10 @@
 
     if (tab === "diagnostico") {
       return [
-        '<div class="skytools-section-head"><strong>Diagnostico</strong><button data-action="status" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
+        '<div class="skytools-section-head"><strong>Diagnóstico</strong><button data-action="status" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
         '<div class="skytools-grid skytools-tight-grid">',
-        actionCard("integration-skytools", "plug", "Ativar SkyTools", "Instalar integracao Steam", false),
-        actionCard("integration-steamtools", "plug", "Ativar SteamTools", "Alternativa compativel", false),
+        actionCard("integration-skytools", "plug", "Ativar SkyTools", "Instalar integração Steam", false),
+        actionCard("integration-steamtools", "plug", "Ativar SteamTools", "Alternativa compatível", false),
         '</div>',
         renderDiagnostics()
       ].join("");
@@ -815,12 +842,12 @@
     return [
       '<div class="skytools-current">',
       '  <div class="skytools-current-art">' + icon("library") + '</div>',
-      '  <div><span>App atual</span><strong>' + escapeHtml(app.appid ? app.name : "Nenhum jogo aberto") + '</strong><small>' + escapeHtml(app.appid ? "AppID " + app.appid : "Abra uma pagina de jogo para adicionar.") + '</small></div>',
+      '  <div><span>App atual</span><strong>' + escapeHtml(app.appid ? app.name : "Nenhum jogo aberto") + '</strong><small>' + escapeHtml(app.appid ? "AppID " + app.appid : "Abra uma página de jogo para adicionar.") + '</small></div>',
       '</div>',
       '<div class="skytools-metrics">' + statusMetrics() + '</div>',
       '<div class="skytools-grid">',
-      actionCard("add", "add", "Adicionar jogo", app.appid ? "Instalar manifests na Steam" : "Disponivel em paginas de jogo", true),
-      actionCard("correcoes-tab", "fixes", "Correcoes", "Buscar por jogo instalado", false),
+      actionCard("add", "add", "Adicionar jogo", app.appid ? "Instalar manifests na Steam" : "Disponível em páginas de jogo", true),
+      actionCard("correcoes-tab", "fixes", "Correções", "Buscar por jogo instalado", false),
       '</div>'
     ].join("");
   }
@@ -833,12 +860,12 @@
       '    <div class="skytools-header-actions"><span class="skytools-status-dot"></span><button class="skytools-panel-close" type="button" title="Fechar">' + icon("close") + '</button></div>',
       '  </div>',
       '  <div class="skytools-tabs">',
-      '    <button type="button" data-tab="inicio">Inicio</button>',
+      '    <button type="button" data-tab="inicio">Início</button>',
       '    <button type="button" data-tab="biblioteca">Biblioteca</button>',
-      '    <button type="button" data-tab="correcoes">Correcoes</button>',
+      '    <button type="button" data-tab="correcoes">Correções</button>',
       '    <button type="button" data-tab="apis">APIs</button>',
       '    <button type="button" data-tab="backup">Backup</button>',
-      '    <button type="button" data-tab="diagnostico">Diagnostico</button>',
+      '    <button type="button" data-tab="diagnostico">Diagnóstico</button>',
       '  </div>',
       '  <div class="skytools-panel-body"></div>',
       '  <div class="skytools-activity">',
@@ -927,11 +954,11 @@
     }
 
     var data = normalizeData(result);
-    var detail = "Acao concluida.";
+    var detail = "Ação concluída.";
     if (Array.isArray(data)) {
       detail = data.length + " item(ns) encontrados.";
     } else if (data && data.installedCount != null) {
-      detail = data.installedCount + " jogos adicionados. Integracao: " + (data.integration || "-") + ".";
+      detail = data.installedCount + " jogos adicionados. Integração: " + (data.integration || "-") + ".";
       if (data.appNameCacheCount != null) {
         detail += " Cache: " + data.appNameCacheCount + " nomes.";
       }
@@ -943,18 +970,18 @@
       detail = data.path;
     }
 
-    setActivity("success", title || "Concluido", detail);
+    setActivity("success", title || "Concluído", detail);
     showToast("SkyTools", detail, "success");
     renderPanelBody();
   }
 
   function runAction(title, method, payload, after) {
     if (state.busy) {
-      showToast("SkyTools", "Aguarde a acao atual terminar.", "info");
+      showToast("SkyTools", "Aguarde a ação atual terminar.", "info");
       return Promise.resolve();
     }
 
-    setBusy(title, method === "SkyToolsRepair" ? "Executando correcao externa..." : "Executando em segundo plano.");
+    setBusy(title, method === "SkyToolsRepair" ? "Executando correção externa..." : "Executando em segundo plano.");
     return call(method, payload).then(function (result) {
       clearBusy();
       if (typeof after === "function" && result && result.success !== false) {
@@ -977,7 +1004,7 @@
   function addCurrentGame() {
     var payload = currentPayload();
     if (!payload.appid) {
-      showToast("SkyTools", "Abra a pagina de um jogo na loja Steam.", "error");
+      showToast("SkyTools", "Abra a página de um jogo na loja Steam.", "error");
       return;
     }
     return runAction("Adicionando jogo", "SkyToolsAddGame", payload, function () {
@@ -992,7 +1019,7 @@
   function removeCurrentGame() {
     var payload = currentPayload();
     if (!payload.appid) {
-      showToast("SkyTools", "Abra a pagina de um jogo na loja Steam.", "error");
+      showToast("SkyTools", "Abra a página de um jogo na loja Steam.", "error");
       return;
     }
     return runAction("Removendo jogo", "SkyToolsRemoveGame", payload, function () {
@@ -1099,7 +1126,7 @@
   function openExternal(url) {
     url = String(url || "").trim();
     if (!url) {
-      showToast("SkyTools", "Link indisponivel.", "error");
+      showToast("SkyTools", "Link indisponível.", "error");
       return;
     }
     window.open(url, "_blank");
@@ -1108,7 +1135,7 @@
   function copyText(text) {
     text = String(text || "");
     if (!text) {
-      showToast("SkyTools", "Link indisponivel.", "error");
+      showToast("SkyTools", "Link indisponível.", "error");
       return;
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1145,11 +1172,11 @@
         setActivity("success", "Backup carregado", games.length + " jogo(s) no arquivo.");
         renderPanelBody();
       } catch (error) {
-        renderResult({ success: false, error: error && error.message ? error.message : String(error) }, "Backup invalido");
+        renderResult({ success: false, error: error && error.message ? error.message : String(error) }, "Backup inválido");
       }
     };
     reader.onerror = function () {
-      renderResult({ success: false, error: "Nao foi possivel ler o arquivo." }, "Backup invalido");
+      renderResult({ success: false, error: "Não foi possível ler o arquivo." }, "Backup inválido");
     };
     reader.readAsText(file);
   }
@@ -1231,6 +1258,7 @@
         ensureTabData("correcoes");
       }
       if (action === "refresh-fix-games") {
+        state.fixVisibleCount = 80;
         runAction("Carregando jogos instalados", "SkyToolsSteamInstalled", {}, function (result) {
           state.fixGames = result;
           state.activeTab = "correcoes";
@@ -1269,10 +1297,21 @@
       }
       if (action === "api-cancel") { state.apiForm = null; renderPanelBody(); }
       if (action === "api-save") runAction("Salvando API", "SkyToolsSaveApi", currentApiForm(panel), function () { state.apiForm = null; state.apis = null; return call("SkyToolsApis", {}).then(function (result) { state.apis = result; }); });
-      if (action === "api-save-settings") runAction("Salvando preferencias", "SkyToolsSaveApiSettings", { apiOrder: state.apiOrder || [] }, function (result) { state.apis = result; });
-      if (action === "fixes") loadFixSources("fixes", "Buscando correcoes", payload);
-      if (action === "online") loadFixSources("online", "Buscando correcoes Ryuu", payload);
-      if (action === "denuvo") loadFixSources("denuvo", "Buscando correcoes Ryuu", payload);
+      if (action === "api-save-settings") runAction("Salvando preferências", "SkyToolsSaveApiSettings", { apiOrder: state.apiOrder || [] }, function (result) { state.apis = result; });
+      if (action === "fixes") loadFixSources("fixes", "Buscando correções", payload);
+      if (action === "online") loadFixSources("online", "Buscando correções Sky", payload);
+      if (action === "denuvo") loadFixSources("denuvo", "Buscando correções Sky", payload);
+      if (action === "fix-load-more") {
+        var nextLimit = Math.max(80, Number(state.fixVisibleCount || 80));
+        if (state.fixMatchedCount && nextLimit >= state.fixMatchedCount) {
+          return;
+        }
+        state.fixVisibleCount = nextLimit + 120;
+        var loadMoreList = panel.querySelector('[data-role="fix-game-list"]');
+        if (loadMoreList) {
+          loadMoreList.innerHTML = renderFixGamePicker();
+        }
+      }
       if (action === "fix-open") openExternal(button.getAttribute("data-url"));
       if (action === "fix-copy") copyText(button.getAttribute("data-url"));
       if (action === "fix-game") {
@@ -1281,13 +1320,30 @@
           name: button.getAttribute("data-name") || "",
           gamePath: button.getAttribute("data-game-path") || ""
         };
-        loadFixSources("fixes", "Buscando correcoes Ryuu", state.selectedFixGame);
+        loadFixSources("fixes", "Buscando correções Sky", state.selectedFixGame);
+      }
+      if (action === "fix-remove") {
+        var removeAppid = button.getAttribute("data-appid") || "";
+        var removeName = button.getAttribute("data-name") || "";
+        runAction("Removendo correção", "SkyToolsRemoveFix", {
+          appid: removeAppid,
+          name: removeName
+        }, function (result) {
+          var data = normalizeData(result) || {};
+          var validateUrl = data.validateUrl || ("steam://validate/" + removeAppid);
+          try {
+            window.location.href = validateUrl;
+          } catch (_) {}
+          return refreshInstalledCache(true).then(function (fresh) {
+            state.fixGames = fresh;
+          });
+        });
       }
       if (action === "fix-prepare") {
         var source = sourceArray(state.fixResults)[Number(button.getAttribute("data-source-index") || 0)];
         var selected = state.selectedFixGame || payload;
         var sourceJson = JSON.stringify(source || {});
-        runAction("Aplicando Ryuu", "SkyToolsApplyFix", {
+        runAction("Aplicando Sky", "SkyToolsApplyFix", {
           appid: selected.appid,
           name: selected.name,
           gamePath: selected.gamePath || "",
@@ -1296,6 +1352,9 @@
           downloadUrl: sourceUrl(source || {}),
           sourceName: source && (source.name || source.title) || "",
           sourceType: source && source.type || "",
+          sourceKind: source && source.kind || "",
+          fileName: source && (source.fileName || source.filename || "") || "",
+          displayName: source && source.displayName || "",
           provider: source && source.provider || "",
           size: source && source.size || ""
         }, function (result) {
@@ -1325,6 +1384,7 @@
     panel.addEventListener("input", function (event) {
       if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "fixSearch") {
         state.fixQuery = event.target.value || "";
+        state.fixVisibleCount = 80;
         var fixList = panel.querySelector('[data-role="fix-game-list"]');
         if (fixList) {
           fixList.innerHTML = renderFixGamePicker();
@@ -1338,6 +1398,24 @@
         }
       }
     });
+
+    panel.addEventListener("scroll", function (event) {
+      var target = event.target;
+      if (!target || !target.getAttribute || target.getAttribute("data-role") !== "fix-game-list") {
+        return;
+      }
+      if (target.scrollTop + target.clientHeight < target.scrollHeight - 72) {
+        return;
+      }
+      var oldLimit = Number(state.fixVisibleCount || 80);
+      if (state.fixMatchedCount && oldLimit >= state.fixMatchedCount) {
+        return;
+      }
+      state.fixVisibleCount = oldLimit + 120;
+      var oldTop = target.scrollTop;
+      target.innerHTML = renderFixGamePicker();
+      target.scrollTop = oldTop;
+    }, true);
 
     panel.addEventListener("mousedown", function (event) {
       if (event.target && event.target.closest && event.target.closest(".skytools-row-actions,button,input,textarea,select")) {

@@ -1,37 +1,164 @@
-2026-07-14 18:57:47 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\SkyTools.Plugin\backend
-2026-07-14 18:57:47 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
-2026-07-14 18:57:47 browser modules injected: js=-1, css=-1
-2026-07-14 18:59:48 SkyTools browser script loaded: https://store.steampowered.com/
-2026-07-14 18:59:52 SkyTools browser script loaded: https://store.steampowered.com/app/1977170/Jusant/
-2026-07-14 18:59:52 SkyToolsInstalled iniciado
-2026-07-14 18:59:52 SkyToolsInstalled fs.list retornou: 59
-2026-07-14 18:59:52 SkyToolsInstalled indice retornou: 59
-2026-07-14 18:59:55 SkyTools installer iniciado para appid=1977170
-2026-07-14 18:59:57 SkyToolsInstalled iniciado
-2026-07-14 18:59:57 SkyToolsInstalled fs.list retornou: 60
-2026-07-14 18:59:57 SkyToolsInstalled indice retornou: 60
-2026-07-14 19:00:02 SkyToolsInstalled iniciado
-2026-07-14 19:00:02 SkyToolsInstalled usando cache: 60
-2026-07-14 19:31:31 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\SkyTools.Plugin\backend
-2026-07-14 19:31:31 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
-2026-07-14 19:31:31 browser modules injected: js=-1, css=-1
-2026-07-14 19:33:00 SkyToolsInstalled iniciado
-2026-07-14 19:33:00 SkyToolsInstalled fs.list retornou: 60
-2026-07-14 19:33:00 SkyToolsInstalled indice retornou: 60
-2026-07-14 19:33:02 SkyToolsInstalled iniciado
-2026-07-14 19:33:02 SkyToolsInstalled usando cache: 60
-2026-07-14 19:43:48 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\SkyTools.Plugin\backend
-2026-07-14 19:43:48 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
-2026-07-14 19:43:48 browser modules injected: js=-1, css=-1
-2026-07-14 19:44:21 SkyTools browser script loaded: https://store.steampowered.com/app/3321460
-2026-07-14 19:44:21 SkyToolsInstalled iniciado
-2026-07-14 19:44:21 SkyToolsInstalled fs.list retornou: 60
-2026-07-14 19:44:21 SkyToolsInstalled indice retornou: 60
-2026-07-14 19:44:33 SkyTools API order: morrenus,skyapi,sushi
-2026-07-14 19:44:34 SkyTools API order: skyapi,morrenus,sushi
-2026-07-14 19:44:36 SkyTools API order: skyapi,morrenus,sushi
-2026-07-14 19:44:37 SkyTools API order: morrenus,skyapi,sushi
-2026-07-14 19:44:38 SkyTools API order: skyapi,morrenus,sushi
-2026-07-14 19:45:16 SkyToolsInstalled iniciado
-2026-07-14 19:45:16 SkyToolsInstalled fs.list retornou: 60
-2026-07-14 19:45:16 SkyToolsInstalled indice retornou: 60
+2026-07-19 22:39:59 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 22:39:59 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 22:39:59 browser modules injected: js=-1, css=-1
+2026-07-19 22:40:26 SkyToolsInstalled iniciado
+2026-07-19 22:40:26 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 22:40:26 SkyToolsInstalled indice retornou: 69
+2026-07-19 22:43:16 Millennium Error: RPC timeout for child: skytools-plugin
+2026-07-19 22:46:19 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 22:46:19 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 22:46:19 browser modules injected: js=-1, css=-1
+2026-07-19 22:47:54 SkyToolsInstalled iniciado
+2026-07-19 22:47:54 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 22:47:54 SkyToolsInstalled indice retornou: 69
+2026-07-19 22:50:27 Millennium Error: RPC timeout for child: skytools-plugin
+2026-07-19 22:52:53 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 22:52:54 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 22:52:54 browser modules injected: js=-1, css=-1
+2026-07-19 22:53:28 SkyToolsInstalled iniciado
+2026-07-19 22:53:28 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 22:53:28 SkyToolsInstalled indice retornou: 69
+2026-07-19 22:55:36 Millennium Error: RPC timeout for child: skytools-plugin
+2026-07-19 22:56:58 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 22:56:58 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 22:56:58 browser modules injected: js=-1, css=-1
+2026-07-19 22:57:23 SkyToolsInstalled iniciado
+2026-07-19 22:57:23 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 22:57:23 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:02:11 SkyToolsInstalled iniciado
+2026-07-19 23:02:11 SkyToolsInstalled fs.list retornou: 68
+2026-07-19 23:02:11 SkyToolsInstalled indice retornou: 68
+2026-07-19 23:02:12 SkyTools installer iniciado para appid=2215200
+2026-07-19 23:02:13 SkyToolsInstalled iniciado
+2026-07-19 23:02:13 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:02:13 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:02:14 SkyToolsInstalled iniciado
+2026-07-19 23:02:14 SkyToolsInstalled fs.list retornou: 68
+2026-07-19 23:02:14 SkyToolsInstalled indice retornou: 68
+2026-07-19 23:09:17 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 23:09:17 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 23:09:17 browser modules injected: js=-1, css=-1
+2026-07-19 23:09:31 SkyTools installer iniciado para appid=2215200
+2026-07-19 23:09:33 SkyToolsInstalled iniciado
+2026-07-19 23:09:33 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:09:33 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:09:40 SkyToolsInstalled iniciado
+2026-07-19 23:09:40 SkyToolsInstalled usando cache: 69
+2026-07-19 23:10:11 SkyTools browser script loaded: https://store.steampowered.com/app/2668510
+2026-07-19 23:10:11 SkyToolsInstalled iniciado
+2026-07-19 23:10:11 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:10:11 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:12:54 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-19 23:12:54 SkyToolsInstalled iniciado
+2026-07-19 23:12:54 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:12:54 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:13:34 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-19 23:13:34 SkyToolsInstalled iniciado
+2026-07-19 23:13:34 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:13:34 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:13:51 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-19 23:13:51 SkyToolsInstalled iniciado
+2026-07-19 23:13:51 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:13:51 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:14:45 SkyToolsInstalled iniciado
+2026-07-19 23:14:45 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:14:45 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:15:19 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-19 23:15:19 SkyToolsInstalled iniciado
+2026-07-19 23:15:19 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:15:19 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:17:50 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 23:17:50 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 23:17:50 browser modules injected: js=-1, css=-1
+2026-07-19 23:22:00 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 23:22:00 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 23:22:00 browser modules injected: js=-1, css=-1
+2026-07-19 23:22:47 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-19 23:22:47 SkyToolsInstalled iniciado
+2026-07-19 23:22:47 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:22:47 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:29:14 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 23:29:14 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 23:29:14 browser modules injected: js=-1, css=-1
+2026-07-19 23:31:16 SkyToolsInstalled iniciado
+2026-07-19 23:31:16 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:31:16 SkyToolsInstalled indice retornou: 69
+2026-07-19 23:35:39 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-19 23:35:39 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-19 23:35:39 browser modules injected: js=-1, css=-1
+2026-07-19 23:36:55 SkyToolsInstalled iniciado
+2026-07-19 23:36:55 SkyToolsInstalled fs.list retornou: 69
+2026-07-19 23:36:55 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:18:14 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-20 00:18:14 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-20 00:18:14 browser modules injected: js=-1, css=-1
+2026-07-20 00:19:02 SkyToolsInstalled iniciado
+2026-07-20 00:19:02 SkyToolsInstalled fs.list retornou: 69
+2026-07-20 00:19:02 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:33:10 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-20 00:33:10 SkyToolsInstalled iniciado
+2026-07-20 00:33:10 SkyToolsInstalled fs.list retornou: 69
+2026-07-20 00:33:10 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:40:41 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-20 00:40:41 SkyToolsInstalled iniciado
+2026-07-20 00:40:41 SkyToolsInstalled fs.list retornou: 69
+2026-07-20 00:40:41 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:40:44 SkyToolsInstalled iniciado
+2026-07-20 00:40:44 SkyToolsInstalled fs.list retornou: 68
+2026-07-20 00:40:44 SkyToolsInstalled indice retornou: 68
+2026-07-20 00:40:50 SkyTools installer iniciado para appid=4704690
+2026-07-20 00:40:52 SkyToolsInstalled iniciado
+2026-07-20 00:40:52 SkyToolsInstalled fs.list retornou: 69
+2026-07-20 00:40:52 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:47:50 SkyTools browser script loaded: https://store.steampowered.com/app/4704690
+2026-07-20 00:47:50 SkyToolsInstalled iniciado
+2026-07-20 00:47:50 SkyToolsInstalled fs.list retornou: 69
+2026-07-20 00:47:50 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:48:04 SkyTools browser script loaded: https://store.steampowered.com/app/44350
+2026-07-20 00:48:04 SkyToolsInstalled iniciado
+2026-07-20 00:48:04 SkyToolsInstalled fs.list retornou: 69
+2026-07-20 00:48:04 SkyToolsInstalled indice retornou: 69
+2026-07-20 00:48:12 SkyTools installer iniciado para appid=44350
+2026-07-20 00:48:14 SkyToolsInstalled iniciado
+2026-07-20 00:48:14 SkyToolsInstalled fs.list retornou: 70
+2026-07-20 00:48:14 SkyToolsInstalled indice retornou: 70
+2026-07-20 00:51:07 SkyTools browser script loaded: https://store.steampowered.com/app/44350
+2026-07-20 00:51:07 SkyToolsInstalled iniciado
+2026-07-20 00:51:07 SkyToolsInstalled fs.list retornou: 70
+2026-07-20 00:51:07 SkyToolsInstalled indice retornou: 70
+2026-07-20 00:54:24 SkyTools browser script loaded: https://store.steampowered.com/app/44350
+2026-07-20 00:54:24 SkyToolsInstalled iniciado
+2026-07-20 00:54:24 SkyToolsInstalled fs.list retornou: 70
+2026-07-20 00:54:24 SkyToolsInstalled indice retornou: 70
+2026-07-20 00:59:08 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-20 00:59:08 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-20 00:59:08 browser modules injected: js=-1, css=-1
+2026-07-20 02:11:36 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-20 02:11:36 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-20 02:11:36 browser modules injected: js=-1, css=-1
+2026-07-20 02:16:04 SkyTools browser script loaded: https://store.steampowered.com/app/221040/Resident_Evil_6
+2026-07-20 02:16:04 SkyToolsInstalled iniciado
+2026-07-20 02:16:04 SkyToolsInstalled fs.list retornou: 70
+2026-07-20 02:16:04 SkyToolsInstalled indice retornou: 70
+2026-07-20 02:16:07 SkyTools installer iniciado para appid=221040
+2026-07-20 02:16:09 SkyToolsInstalled iniciado
+2026-07-20 02:16:09 SkyToolsInstalled fs.list retornou: 71
+2026-07-20 02:16:09 SkyToolsInstalled indice retornou: 71
+2026-07-20 02:29:52 SkyTools browser script loaded: https://store.steampowered.com/app/221040/Resident_Evil_6
+2026-07-20 02:29:52 SkyToolsInstalled iniciado
+2026-07-20 02:29:52 SkyToolsInstalled fs.list retornou: 71
+2026-07-20 02:29:52 SkyToolsInstalled indice retornou: 71
+2026-07-20 02:30:02 SkyTools installer iniciado para appid=550
+2026-07-20 02:30:04 SkyToolsInstalled iniciado
+2026-07-20 02:30:04 SkyToolsInstalled fs.list retornou: 72
+2026-07-20 02:30:04 SkyToolsInstalled indice retornou: 72
+2026-07-20 02:36:24 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-20 02:36:24 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-20 02:36:24 browser modules injected: js=-1, css=-1
+2026-07-20 02:37:52 SkyTools browser script loaded: https://store.steampowered.com/app/550
+2026-07-20 02:37:52 SkyToolsInstalled iniciado
+2026-07-20 02:37:52 SkyToolsInstalled fs.list retornou: 72
+2026-07-20 02:37:52 SkyToolsInstalled indice retornou: 72
+2026-07-20 14:49:25 SkyTools Lua backend carregado em c:/program files (x86)/steam\millennium/plugins\skytools\backend
+2026-07-20 14:49:25 browser assets synced: jsWebkit=true, jsSteamUiWebkit=true
+2026-07-20 14:49:25 browser modules injected: js=-1, css=-1
