@@ -119,10 +119,29 @@
   background: linear-gradient(135deg, var(--skytools-button-remove-start), var(--skytools-button-remove-end));
 }
 
+.skytools-game-button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.skytools-game-button-loading {
+  border-color: rgba(var(--skytools-accent-rgb), 0.72);
+  background: linear-gradient(135deg, rgba(var(--skytools-accent-strong-rgb), 0.82), rgba(var(--skytools-accent-rgb), 0.58));
+}
+
+.skytools-game-button-loading span {
+  min-width: 88px;
+}
+
 .skytools-fab:hover,
 .skytools-game-button:hover,
 .skytools-panel button:hover {
   filter: brightness(1.08);
+}
+
+.skytools-game-button:disabled:hover,
+.skytools-panel button:disabled:hover {
+  filter: none;
 }
 
 .skytools-toast {
@@ -396,6 +415,10 @@
 .skytools-action-card:disabled {
   cursor: default;
   opacity: 0.62;
+}
+
+.skytools-action-loading {
+  border-color: rgba(var(--skytools-accent-rgb), 0.42);
 }
 
 .skytools-primary-action {

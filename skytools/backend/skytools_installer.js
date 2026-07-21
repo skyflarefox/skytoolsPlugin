@@ -30,15 +30,29 @@
     if (!fso.FolderExists(path)) fso.CreateFolder(path);
   }
 
-  function readText(path) {
+  function readTextWithCharset(path, charset) {
     if (!fso.FileExists(path)) return "";
     var stream = new ActiveXObject("ADODB.Stream");
     stream.Type = 2;
-    stream.Charset = "utf-8";
+    stream.Charset = charset;
     stream.Open();
     stream.LoadFromFile(path);
     var text = stream.ReadText();
     stream.Close();
+    return text;
+  }
+
+  function readText(path) {
+    var charsets = ["utf-8", "windows-1252", "unicode"];
+    for (var i = 0; i < charsets.length; i += 1) {
+      try {
+        return readTextWithCharset(path, charsets[i]);
+      } catch (_) {
+      }
+    }
+    var file = fso.OpenTextFile(path, 1, false);
+    var text = file.ReadAll();
+    file.Close();
     return text;
   }
 
@@ -53,11 +67,26 @@
     stream.Close();
   }
 
-  function writePlainText(path, text) {
+  function writeUtf8NoBom(path, text) {
     ensureDir(fso.GetParentFolderName(path));
-    var file = fso.CreateTextFile(path, true, false);
-    file.Write(String(text || ""));
-    file.Close();
+    var textStream = new ActiveXObject("ADODB.Stream");
+    textStream.Type = 2;
+    textStream.Charset = "utf-8";
+    textStream.Open();
+    textStream.WriteText(String(text || ""));
+    textStream.Position = 0;
+    textStream.Type = 1;
+    if (textStream.Size >= 3) {
+      textStream.Position = 3;
+    }
+
+    var binaryStream = new ActiveXObject("ADODB.Stream");
+    binaryStream.Type = 1;
+    binaryStream.Open();
+    textStream.CopyTo(binaryStream);
+    binaryStream.SaveToFile(path, 2);
+    binaryStream.Close();
+    textStream.Close();
   }
 
   function writeBinary(path, bytes) {
@@ -68,10 +97,6 @@
     stream.Write(bytes);
     stream.SaveToFile(path, 2);
     stream.Close();
-  }
-
-  function psQuote(value) {
-    return "'" + String(value || "").replace(/'/g, "''") + "'";
   }
 
   function cleanText(value) {
@@ -224,22 +249,28 @@
     return output;
   }
 
+  function quoteCmdArg(value) {
+    return "\"" + String(value || "").replace(/"/g, "\"\"") + "\"";
+  }
+
+  function tryExtractWithTar(zipPath, targetDir) {
+    try {
+      removeTree(targetDir);
+      ensureDir(targetDir);
+      var command = "tar.exe -xf " + quoteCmdArg(zipPath) + " -C " + quoteCmdArg(targetDir);
+      var exitCode = shell.Run(command, 0, true);
+      if (exitCode !== 0) return false;
+      var luaFiles = collectFiles(targetDir, /\.lua$/i, []);
+      var manifestFiles = collectFiles(targetDir, /\.manifest$/i, []);
+      return luaFiles.length > 0 || manifestFiles.length > 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function copyFolderFromZip(zipPath, targetDir) {
     ensureDir(targetDir);
-    var psCommand = [
-      "$ErrorActionPreference='Stop'",
-      "Expand-Archive -LiteralPath " + psQuote(zipPath) + " -DestinationPath " + psQuote(targetDir) + " -Force"
-    ].join("; ");
-    var exitCode = shell.Run(
-      "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command " + '"' + psCommand.replace(/"/g, '\\"') + '"',
-      7,
-      true
-    );
-    if (exitCode === 0) {
-      var psLuaFiles = collectFiles(targetDir, /\.lua$/i, []);
-      var psManifestFiles = collectFiles(targetDir, /\.manifest$/i, []);
-      if (psLuaFiles.length > 0 || psManifestFiles.length > 0) return;
-    }
+    if (tryExtractWithTar(zipPath, targetDir)) return;
 
     var app = new ActiveXObject("Shell.Application");
     var source = app.NameSpace(zipPath);
@@ -272,10 +303,17 @@
 
   function countDlcs(text) {
     var count = 0;
+    var seen = {};
+    text = String(text || "").replace(/--\[(=*)\[[\s\S]*?\]\1\]/g, "");
+    text = text.replace(/--[^\r\n]*/g, "");
     var regex = /addappid\s*\(\s*(\d+)/ig;
     var match;
-    while ((match = regex.exec(String(text || ""))) !== null) {
-      if (String(match[1]) !== String(appId)) count += 1;
+    while ((match = regex.exec(text)) !== null) {
+      var id = String(match[1]);
+      if (id !== String(appId) && !seen[id]) {
+        seen[id] = true;
+        count += 1;
+      }
     }
     return count;
   }
@@ -440,7 +478,7 @@
       }
       var scriptText = disableSetManifestIdCalls(readText(scriptSource));
       var dlcCount = countDlcs(scriptText);
-      writePlainText(scriptDestination, scriptText);
+      writeUtf8NoBom(scriptDestination, scriptText);
 
       var recordsPath = combine(dataRoot, "manifest-installs.json");
       var records = readJson(recordsPath, []);

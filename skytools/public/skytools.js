@@ -79,6 +79,7 @@
     fixMatchedCount: 0,
     selectedFixGame: null,
     lastResult: null,
+    addingAppId: "",
     activityTitle: "Pronto",
     activityDetail: "Aguardando uma ação.",
     activityKind: "idle"
@@ -845,8 +846,18 @@
     if (!button) {
       return;
     }
+    var appid = String(appIdFromUrl() || state.appid || "");
     var added = isCurrentAppAdded();
-    button.classList.toggle("skytools-game-button-remove", added);
+    var adding = !!(appid && state.addingAppId === appid);
+    button.classList.toggle("skytools-game-button-remove", added && !adding);
+    button.classList.toggle("skytools-game-button-loading", adding);
+    button.disabled = adding || state.busy;
+    button.setAttribute("aria-busy", adding ? "true" : "false");
+    if (adding) {
+      button.innerHTML = icon("spinner", "spin") + "<span>Adicionando...</span>";
+      button.title = "Adicionando este jogo via SkyTools";
+      return;
+    }
     button.innerHTML = icon(added ? "trash" : "add") + "<span>" + (added ? "Remover via SkyTools" : "Adicionar via SkyTools") + "</span>";
     button.title = added ? "Remover este jogo da biblioteca SkyTools" : "Adicionar este jogo via SkyTools";
   }
@@ -922,6 +933,10 @@
     button.type = "button";
     button.className = "skytools-game-button";
     button.addEventListener("click", function () {
+      if (button.disabled || state.addingAppId) {
+        showToast("SkyTools", "Aguarde a adição terminar.", "info");
+        return;
+      }
       if (isCurrentAppAdded()) {
         removeCurrentGame();
       } else {
@@ -987,10 +1002,10 @@
     return null;
   }
 
-  function actionCard(action, iconName, title, detail, primary) {
+  function actionCard(action, iconName, title, detail, primary, loading) {
     return [
-      '<button type="button" class="skytools-action-card ' + (primary ? "skytools-primary-action" : "") + '" data-action="' + action + '">',
-      '  <span class="skytools-action-icon">' + icon(iconName) + '</span>',
+      '<button type="button" class="skytools-action-card ' + (primary ? "skytools-primary-action" : "") + (loading ? " skytools-action-loading" : "") + '" data-action="' + action + '"' + (loading ? ' aria-busy="true" disabled' : "") + '>',
+      '  <span class="skytools-action-icon">' + icon(iconName, loading ? "spin" : "") + '</span>',
       '  <span class="skytools-action-copy"><strong>' + escapeHtml(title) + '</strong><small>' + escapeHtml(detail) + '</small></span>',
       '</button>'
     ].join("");
@@ -1308,7 +1323,14 @@
       '</div>',
       '<div class="skytools-metrics">' + statusMetrics() + '</div>',
       '<div class="skytools-grid">',
-      actionCard("add", "add", "Adicionar jogo", app.appid ? "Instalar manifests na Steam" : "Disponível em páginas de jogo", true),
+      actionCard(
+        "add",
+        state.addingAppId && app.appid && state.addingAppId === String(app.appid) ? "spinner" : "add",
+        state.addingAppId && app.appid && state.addingAppId === String(app.appid) ? "Adicionando..." : "Adicionar jogo",
+        state.addingAppId && app.appid && state.addingAppId === String(app.appid) ? "Baixando e instalando manifests" : (app.appid ? "Instalar manifests na Steam" : "Disponível em páginas de jogo"),
+        true,
+        !!(state.addingAppId && app.appid && state.addingAppId === String(app.appid))
+      ),
       actionCard("correcoes-tab", "fixes", "Correções", "Buscar por jogo instalado", false),
       '</div>'
     ].join("");
@@ -1469,12 +1491,29 @@
       showToast("SkyTools", "Abra a página de um jogo na loja Steam.", "error");
       return;
     }
+    if (state.addingAppId) {
+      showToast("SkyTools", "Aguarde a adição terminar.", "info");
+      return Promise.resolve();
+    }
+    state.addingAppId = String(payload.appid);
+    updateGameButton();
+    renderPanelBody();
     return runAction("Adicionando jogo", "SkyToolsAddGame", payload, function () {
       return refreshInstalledCache(true).then(function () {
         state.installedMap[String(payload.appid)] = true;
         rememberGameName(payload.appid, payload.name);
         updateGameButton();
       });
+    }).then(function (result) {
+      state.addingAppId = "";
+      updateGameButton();
+      renderPanelBody();
+      return result;
+    }, function (error) {
+      state.addingAppId = "";
+      updateGameButton();
+      renderPanelBody();
+      throw error;
     });
   }
 
@@ -1709,6 +1748,9 @@
 
       var button = findActionButton(event.target);
       if (!button) {
+        return;
+      }
+      if (button.disabled) {
         return;
       }
 

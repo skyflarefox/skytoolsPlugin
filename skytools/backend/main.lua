@@ -26,7 +26,8 @@ local runtime = {
     steam_path = nil,
     last_injection = {},
     cache = {},
-    operations = {}
+    operations = {},
+    hidden_console_job_id = 0
 }
 
 local function safe_backend_path()
@@ -842,6 +843,454 @@ local function get_first_prop(source, keys, fallback)
     return fallback
 end
 
+local function hidden_console_queue_dir()
+    return join_path(data_root(), "skytools-hidden-console-queue")
+end
+
+local function hidden_console_pending_dir()
+    return join_path(hidden_console_queue_dir(), "pending")
+end
+
+local function hidden_console_running_dir()
+    return join_path(hidden_console_queue_dir(), "running")
+end
+
+local function hidden_console_done_dir()
+    return join_path(hidden_console_queue_dir(), "done")
+end
+
+local function hidden_console_state_path()
+    return join_path(data_root(), "skytools-hidden-console-state.json")
+end
+
+local function hidden_console_stop_path()
+    return join_path(data_root(), "skytools-hidden-console.stop")
+end
+
+local function auto_update_status_path()
+    return join_path(data_root(), "skytools-auto-update-status.json")
+end
+
+local function hidden_console_worker_script()
+    return [[
+param([string]$Root)
+$ErrorActionPreference = 'Continue'
+if ([string]::IsNullOrWhiteSpace($Root)) { $Root = Split-Path -Parent $MyInvocation.MyCommand.Path }
+$Queue = Join-Path $Root 'skytools-hidden-console-queue'
+$Pending = Join-Path $Queue 'pending'
+$Running = Join-Path $Queue 'running'
+$Done = Join-Path $Queue 'done'
+$StatePath = Join-Path $Root 'skytools-hidden-console-state.json'
+$StopPath = Join-Path $Root 'skytools-hidden-console.stop'
+$LogPath = Join-Path $Root 'skytools-hidden-console.log'
+
+function Ensure-SkyToolsDirectory([string]$Path) {
+  if (!(Test-Path -LiteralPath $Path)) {
+    New-Item -ItemType Directory -Path $Path -Force | Out-Null
+  }
+}
+
+function Get-SkyToolsUnixTime {
+  return [DateTimeOffset]::Now.ToUnixTimeSeconds()
+}
+
+function Write-SkyToolsLog([string]$Message) {
+  try {
+    Add-Content -LiteralPath $LogPath -Value ("{0:yyyy-MM-dd HH:mm:ss} {1}" -f (Get-Date), $Message) -Encoding UTF8
+  } catch {}
+}
+
+function Write-SkyToolsState([string]$Status, [string]$JobId) {
+  try {
+    $state = [ordered]@{
+      pid = $PID
+      status = $Status
+      jobId = $JobId
+      updatedAt = Get-SkyToolsUnixTime
+    } | ConvertTo-Json -Compress
+    Set-Content -LiteralPath $StatePath -Value $state -Encoding UTF8
+  } catch {}
+}
+
+function Complete-SkyToolsJob($Job, [bool]$Success, [int]$ExitCode, [string]$ErrorMessage) {
+  try {
+    $donePath = Join-Path $Done ([string]$Job.id + '.json')
+    $result = [ordered]@{
+      id = [string]$Job.id
+      kind = [string]$Job.kind
+      success = $Success
+      exitCode = $ExitCode
+      error = $ErrorMessage
+      finishedAt = Get-SkyToolsUnixTime
+    } | ConvertTo-Json -Compress
+    Set-Content -LiteralPath $donePath -Value $result -Encoding UTF8
+  } catch {}
+}
+
+function Invoke-SkyToolsJob($Job) {
+  $exitCode = 0
+  switch ([string]$Job.kind) {
+    'process' {
+      $argv = @()
+      if ($null -ne $Job.arguments) {
+        foreach ($arg in @($Job.arguments)) { $argv += [string]$arg }
+      }
+      & ([string]$Job.filePath) @argv
+      if ($null -ne $LASTEXITCODE) { $exitCode = [int]$LASTEXITCODE }
+    }
+    'powershell-file' {
+      & ([string]$Job.scriptPath)
+      if ($null -ne $LASTEXITCODE) { $exitCode = [int]$LASTEXITCODE }
+    }
+    'elevated-powershell-file' {
+      $args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', [string]$Job.scriptPath)
+      Start-Process -FilePath 'powershell.exe' -ArgumentList $args -Verb RunAs -WindowStyle Hidden
+    }
+    default {
+      throw ('Tipo de job desconhecido: ' + [string]$Job.kind)
+    }
+  }
+  return $exitCode
+}
+
+Ensure-SkyToolsDirectory $Root
+Ensure-SkyToolsDirectory $Queue
+Ensure-SkyToolsDirectory $Pending
+Ensure-SkyToolsDirectory $Running
+Ensure-SkyToolsDirectory $Done
+Remove-Item -LiteralPath $StopPath -Force -ErrorAction SilentlyContinue
+Write-SkyToolsLog 'Worker oculto iniciado.'
+
+while (!(Test-Path -LiteralPath $StopPath)) {
+  Write-SkyToolsState 'idle' ''
+  $jobs = @(Get-ChildItem -LiteralPath $Pending -Filter '*.json' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc, Name)
+  foreach ($file in $jobs) {
+    if (Test-Path -LiteralPath $StopPath) { break }
+    $runningPath = Join-Path $Running $file.Name
+    try {
+      Move-Item -LiteralPath $file.FullName -Destination $runningPath -Force
+    } catch {
+      continue
+    }
+
+    $job = $null
+    $jobId = [IO.Path]::GetFileNameWithoutExtension($runningPath)
+    try {
+      $job = Get-Content -LiteralPath $runningPath -Raw -Encoding UTF8 | ConvertFrom-Json
+      if ($job.id) { $jobId = [string]$job.id }
+      Write-SkyToolsState 'busy' $jobId
+      Write-SkyToolsLog ('Iniciando job ' + $jobId + ' (' + [string]$job.kind + ').')
+      $code = Invoke-SkyToolsJob $job
+      Complete-SkyToolsJob $job $true $code ''
+      Write-SkyToolsLog ('Job ' + $jobId + ' finalizado com exitCode=' + $code + '.')
+    } catch {
+      $message = $_.Exception.Message
+      if (!$message) { $message = [string]$_ }
+      Write-SkyToolsLog ('Falha no job ' + $jobId + ': ' + $message)
+      if ($null -ne $job) {
+        Complete-SkyToolsJob $job $false 1 $message
+      }
+    } finally {
+      Remove-Item -LiteralPath $runningPath -Force -ErrorAction SilentlyContinue
+      Write-SkyToolsState 'idle' ''
+    }
+  }
+  Start-Sleep -Milliseconds 250
+}
+
+Write-SkyToolsState 'stopped' ''
+Write-SkyToolsLog 'Worker oculto encerrado.'
+Remove-Item -LiteralPath $StopPath -Force -ErrorAction SilentlyContinue
+]]
+end
+
+local function ensure_hidden_console_files()
+    mkdirs(hidden_console_pending_dir())
+    mkdirs(hidden_console_running_dir())
+    mkdirs(hidden_console_done_dir())
+
+    local worker_path = ensure_launcher("hidden-console-worker.ps1", hidden_console_worker_script())
+    local launcher_path_value = ensure_launcher("start-hidden-console.vbs", table.concat({
+        "Set shell = CreateObject(\"WScript.Shell\")",
+        "worker = \"\"",
+        "root = \"\"",
+        "If WScript.Arguments.Count > 0 Then worker = WScript.Arguments.Item(0)",
+        "If WScript.Arguments.Count > 1 Then root = WScript.Arguments.Item(1)",
+        "If worker <> \"\" And root <> \"\" Then",
+        "  command = \"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \" & Chr(34) & worker & Chr(34) & \" -Root \" & Chr(34) & root & Chr(34)",
+        "  shell.Run command, 0, False",
+        "End If"
+    }, "\r\n"))
+
+    return worker_path, launcher_path_value
+end
+
+local function hidden_console_is_active()
+    local state = read_json(hidden_console_state_path(), nil)
+    if type(state) ~= "table" then
+        return false
+    end
+
+    local status = trim(get_prop(state, "status", "Status", ""))
+    local updated_at = tonumber(get_prop(state, "updatedAt", "UpdatedAt", 0)) or 0
+    local age = os.time() - updated_at
+    if status == "busy" and age >= 0 and age < 7200 then
+        return true
+    end
+    if status == "idle" and age >= 0 and age < 30 then
+        return true
+    end
+    return false
+end
+
+local function start_hidden_console_worker()
+    if hidden_console_is_active() then
+        return true
+    end
+
+    local worker_path, launcher_path_value = ensure_hidden_console_files()
+    delete_file(hidden_console_stop_path())
+    local ok = pcall(function()
+        local command = "wscript.exe " .. quote_arg(launcher_path_value) .. " " .. quote_arg(worker_path) .. " " .. quote_arg(data_root())
+        if utils ~= nil and utils.exec ~= nil then
+            return utils.exec(command)
+        end
+        return os.execute(command)
+    end)
+    if not ok then
+        log_error("Falha ao iniciar console oculto persistente.")
+        return false
+    end
+
+    local waited = 0
+    while waited < 5000 and not hidden_console_is_active() do
+        sleep_ms(250)
+        waited = waited + 250
+    end
+    return hidden_console_is_active()
+end
+
+local function stop_hidden_console_worker()
+    write_file(hidden_console_stop_path(), tostring(os.time()))
+end
+
+local function next_hidden_console_job_id()
+    runtime.hidden_console_job_id = (tonumber(runtime.hidden_console_job_id) or 0) + 1
+    return tostring(os.time()) .. "-" .. tostring(runtime.hidden_console_job_id)
+end
+
+local function enqueue_hidden_console_job(job)
+    if type(job) ~= "table" then
+        return false
+    end
+    if not start_hidden_console_worker() then
+        return false
+    end
+
+    local id = next_hidden_console_job_id()
+    job.id = id
+    job.createdAt = os.time()
+
+    local path = join_path(hidden_console_pending_dir(), id .. ".json")
+    local temp_path = path .. ".tmp"
+    if not write_json(temp_path, job) then
+        return false
+    end
+    pcall(function()
+        os.remove(path)
+    end)
+    local ok, renamed = pcall(function()
+        return os.rename(temp_path, path)
+    end)
+    if not ok or renamed ~= true then
+        delete_file(temp_path)
+        return false
+    end
+    return true
+end
+
+local function run_hidden_console_process(file_path, arguments)
+    return enqueue_hidden_console_job({
+        kind = "process",
+        filePath = file_path,
+        arguments = arguments or {}
+    })
+end
+
+local function run_hidden_console_powershell_file(script_path, elevated)
+    return enqueue_hidden_console_job({
+        kind = elevated and "elevated-powershell-file" or "powershell-file",
+        scriptPath = script_path
+    })
+end
+
+local function plugin_version()
+    local manifest = read_json(join_path(plugin_dir(), "plugin.json"), {})
+    local version = trim(get_prop(manifest, "version", "Version", ""))
+    if version ~= "" then
+        return version
+    end
+    return "0.0.0"
+end
+
+local function auto_update_script()
+    local current_version = plugin_version()
+    return [=[
+$ErrorActionPreference = 'Stop'
+$Repo = 'skyflarefox/skytoolsPlugin'
+$CurrentVersion = ']=] .. current_version:gsub("'", "''") .. [=['
+$TargetPluginRoot = 'C:\Program Files (x86)\Steam\millennium\plugins\SkyTools.Plugin'
+$PluginsRoot = Split-Path -Parent $TargetPluginRoot
+$SteamUiCacheRoot = 'C:\Program Files (x86)\Steam\steamui\webkit\SkyTools'
+$WorkRoot = Join-Path ([IO.Path]::GetTempPath()) ('skytools-auto-update-' + [Guid]::NewGuid().ToString('N'))
+$StatusPath = Join-Path ']=] .. data_root():gsub("'", "''") .. [=[' 'skytools-auto-update-status.json'
+$LogPath = Join-Path ']=] .. data_root():gsub("'", "''") .. [=[' 'skytools-auto-update.log'
+
+function Write-SkyToolsUpdateLog([string]$Message) {
+  try {
+    $parent = Split-Path -Parent $LogPath
+    if ($parent -and !(Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+    Add-Content -LiteralPath $LogPath -Value ("{0:yyyy-MM-dd HH:mm:ss} {1}" -f (Get-Date), $Message) -Encoding UTF8
+  } catch {}
+}
+
+function Write-SkyToolsUpdateStatus([string]$Status, [string]$Message, [string]$RemoteVersion) {
+  try {
+    $parent = Split-Path -Parent $StatusPath
+    if ($parent -and !(Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+    [ordered]@{
+      success = $Status -ne 'error'
+      status = $Status
+      message = $Message
+      currentVersion = $CurrentVersion
+      remoteVersion = $RemoteVersion
+      updatedAt = [DateTimeOffset]::Now.ToUnixTimeSeconds()
+    } | ConvertTo-Json -Compress | Set-Content -LiteralPath $StatusPath -Encoding UTF8
+  } catch {}
+}
+
+function Get-SkyToolsVersionParts([string]$Value) {
+  $clean = ([string]$Value).Trim()
+  if ($clean.StartsWith('v', [StringComparison]::OrdinalIgnoreCase)) { $clean = $clean.Substring(1) }
+  $match = [regex]::Match($clean, '\d+(?:\.\d+){0,3}')
+  if (!$match.Success) { return @() }
+  $parts = @()
+  foreach ($part in $match.Value.Split('.')) { $parts += [int]$part }
+  while ($parts.Count -lt 4) { $parts += 0 }
+  return $parts
+}
+
+function Compare-SkyToolsVersion([string]$Left, [string]$Right) {
+  $leftParts = Get-SkyToolsVersionParts $Left
+  $rightParts = Get-SkyToolsVersionParts $Right
+  if ($leftParts.Count -eq 0 -or $rightParts.Count -eq 0) {
+    return [string]::Compare($Left, $Right, $true)
+  }
+  for ($i = 0; $i -lt 4; $i += 1) {
+    if ($leftParts[$i] -gt $rightParts[$i]) { return 1 }
+    if ($leftParts[$i] -lt $rightParts[$i]) { return -1 }
+  }
+  return 0
+}
+
+function Remove-SkyToolsTree([string]$Path) {
+  if ([string]::IsNullOrWhiteSpace($Path) -or !(Test-Path -LiteralPath $Path)) { return }
+  for ($attempt = 1; $attempt -le 5; $attempt += 1) {
+    try {
+      Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+      return
+    } catch {
+      if ($attempt -eq 5) { throw }
+      Start-Sleep -Milliseconds (350 * $attempt)
+    }
+  }
+}
+
+function Get-SkyToolsCandidateFolder([string]$ExtractRoot) {
+  $folders = @(Get-ChildItem -LiteralPath $ExtractRoot -Directory -Recurse -ErrorAction SilentlyContinue)
+  $preferred = @($folders | Where-Object { $_.Name -eq 'SkyTools.Plugin' } | Select-Object -First 1)
+  if ($preferred.Count -gt 0) { return $preferred[0] }
+  $fallback = @($folders | Where-Object { $_.Name -eq 'SkyTools' } | Select-Object -First 1)
+  if ($fallback.Count -gt 0) { return $fallback[0] }
+  $manifestFolder = @($folders | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'plugin.json') } | Select-Object -First 1)
+  if ($manifestFolder.Count -gt 0) { return $manifestFolder[0] }
+  return $null
+}
+
+try {
+  Write-SkyToolsUpdateStatus 'checking' 'Verificando releases do GitHub.' ''
+  Write-SkyToolsUpdateLog ('Verificando update. Versao atual=' + $CurrentVersion)
+
+  $headers = @{
+    'User-Agent' = 'SkyTools.Plugin'
+    'Accept' = 'application/vnd.github+json'
+  }
+  $release = Invoke-RestMethod -Uri ('https://api.github.com/repos/' + $Repo + '/releases/latest') -Headers $headers -UseBasicParsing
+  $remoteVersion = [string]$release.tag_name
+  if ([string]::IsNullOrWhiteSpace($remoteVersion)) { throw 'Release sem tag.' }
+
+  if ((Compare-SkyToolsVersion $remoteVersion $CurrentVersion) -le 0) {
+    Write-SkyToolsUpdateStatus 'current' 'SkyTools ja esta atualizado.' $remoteVersion
+    Write-SkyToolsUpdateLog ('Sem update. Remoto=' + $remoteVersion)
+    return
+  }
+
+  Write-SkyToolsUpdateStatus 'downloading' ('Baixando SkyTools ' + $remoteVersion + '.') $remoteVersion
+  New-Item -ItemType Directory -Path $WorkRoot -Force | Out-Null
+  $zipPath = Join-Path $WorkRoot 'skytools-update.zip'
+  $extractRoot = Join-Path $WorkRoot 'extract'
+  $asset = @($release.assets | Where-Object { $_.browser_download_url -and $_.name -match '\.zip$' } | Select-Object -First 1)
+  $downloadUrl = if ($asset.Count -gt 0) { [string]$asset[0].browser_download_url } else { [string]$release.zipball_url }
+  if ([string]::IsNullOrWhiteSpace($downloadUrl)) { throw 'Release sem ZIP para baixar.' }
+
+  Invoke-WebRequest -Uri $downloadUrl -Headers @{ 'User-Agent' = 'SkyTools.Plugin' } -OutFile $zipPath -UseBasicParsing
+  if (!(Test-Path -LiteralPath $zipPath) -or (Get-Item -LiteralPath $zipPath).Length -le 0) { throw 'Download do update veio vazio.' }
+
+  Write-SkyToolsUpdateStatus 'extracting' 'Extraindo pacote do update.' $remoteVersion
+  New-Item -ItemType Directory -Path $extractRoot -Force | Out-Null
+  Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force
+  $candidate = Get-SkyToolsCandidateFolder $extractRoot
+  if ($null -eq $candidate) { throw 'O ZIP nao contem pasta SkyTools.Plugin nem SkyTools.' }
+
+  Write-SkyToolsUpdateStatus 'installing' ('Instalando SkyTools ' + $remoteVersion + '.') $remoteVersion
+  if (!(Test-Path -LiteralPath $PluginsRoot)) { New-Item -ItemType Directory -Path $PluginsRoot -Force | Out-Null }
+  Remove-SkyToolsTree $TargetPluginRoot
+  Remove-SkyToolsTree $SteamUiCacheRoot
+
+  $targetByCandidateName = Join-Path $PluginsRoot $candidate.Name
+  Remove-SkyToolsTree $targetByCandidateName
+  Copy-Item -LiteralPath $candidate.FullName -Destination $PluginsRoot -Recurse -Force
+
+  $installedRoot = Join-Path $PluginsRoot $candidate.Name
+  $installedManifest = Join-Path $installedRoot 'plugin.json'
+  if (!(Test-Path -LiteralPath $installedManifest)) { throw 'Update copiado, mas plugin.json nao foi encontrado na pasta instalada.' }
+
+  Write-SkyToolsUpdateStatus 'updated' ('SkyTools atualizado para ' + $remoteVersion + '. Reinicie a Steam para carregar a nova versao.') $remoteVersion
+  Write-SkyToolsUpdateLog ('Update instalado em ' + $installedRoot)
+
+  if ($candidate.Name -eq 'SkyTools.Plugin') {
+    $newData = Join-Path $installedRoot 'data'
+    New-Item -ItemType Directory -Path $newData -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $newData 'skytools-hidden-console.stop') -Value 'updated' -Encoding ASCII
+  }
+} catch {
+  $message = $_.Exception.Message
+  if (!$message) { $message = [string]$_ }
+  Write-SkyToolsUpdateStatus 'error' $message ''
+  Write-SkyToolsUpdateLog ('ERRO ' + $message)
+} finally {
+  if ($WorkRoot -and (Test-Path -LiteralPath $WorkRoot)) {
+    Remove-Item -LiteralPath $WorkRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+]=]
+end
+
+local function enqueue_auto_update_check()
+    local script_path = ensure_launcher("auto-update.ps1", auto_update_script())
+    return run_hidden_console_powershell_file(script_path, false)
+end
+
 local function normalize_payload(payload)
     if payload == nil then
         return {}
@@ -1095,25 +1544,29 @@ local function scan_steam_installed_with_helper(libraries)
     local result_path = join_path(data_root(), "skytools-job-steam-installed.json")
     delete_file(result_path)
 
-    local command = {
-        "cscript.exe",
+    local arguments = {
         "//Nologo",
-        quote_arg(helper),
-        quote_arg(result_path)
+        helper,
+        result_path
     }
     for _, steamapps in ipairs(libraries or {}) do
         if trim(steamapps) ~= "" then
-            table.insert(command, quote_arg(steamapps))
+            table.insert(arguments, steamapps)
         end
     end
 
-    local ok = pcall(function()
-        if utils ~= nil and utils.exec ~= nil then
-            return utils.exec(table.concat(command, " "))
-        end
-        return os.execute(table.concat(command, " "))
-    end)
-    if not ok or not is_file(result_path) then
+    local ok = run_hidden_console_process("cscript.exe", arguments)
+    if not ok then
+        return nil
+    end
+
+    local waited = 0
+    while waited < 15000 and not is_file(result_path) do
+        sleep_ms(250)
+        waited = waited + 250
+    end
+
+    if not is_file(result_path) then
         return nil
     end
 
@@ -1208,6 +1661,8 @@ local function count_dlcs_from_script(path, appid)
     if text == nil then
         return 0
     end
+    text = text:gsub("%-%-%[%[.-%]%]", "")
+    text = text:gsub("%-%-[^\r\n]*", "")
     local root_appid = tostring(appid or "")
     local seen = {}
     local count = 0
@@ -1273,18 +1728,6 @@ local function job_result_path(name)
     return join_path(jobs_dir(), "skytools-job-" .. tostring(name or "job") .. ".json")
 end
 
-local function run_minimized_command(command, wait_for_exit)
-    local start_flags = wait_for_exit and "/wait /min" or "/min"
-    local launch_command = "cmd.exe /c start \"SkyTools\" " .. start_flags .. " " .. tostring(command or "")
-    local ok = pcall(function()
-        return utils.exec(launch_command)
-    end)
-    if not ok then
-        log_error("Falha ao iniciar comando minimizado.")
-    end
-    return ok
-end
-
 local function scan_installed_with_helper(directories)
     local helper = installed_helper_path()
     if not is_file(helper) then
@@ -1294,19 +1737,18 @@ local function scan_installed_with_helper(directories)
     local result_path = job_result_path("installed")
     delete_file(result_path)
 
-    local command = {
-        "cscript.exe",
+    local arguments = {
         "//Nologo",
-        quote_arg(helper),
-        quote_arg(result_path)
+        helper,
+        result_path
     }
     for _, directory in ipairs(directories or {}) do
         if trim(directory) ~= "" then
-            table.insert(command, quote_arg(directory))
+            table.insert(arguments, directory)
         end
     end
 
-    local ok = run_minimized_command(table.concat(command, " "), false)
+    local ok = run_hidden_console_process("cscript.exe", arguments)
     if not ok then
         return nil
     end
@@ -1421,17 +1863,16 @@ local function resolve_missing_names(appids, names)
     local result_path = job_result_path("names")
     delete_file(result_path)
 
-    local command = {
-        "cscript.exe",
+    local arguments = {
         "//Nologo",
-        quote_arg(helper),
-        quote_arg(result_path)
+        helper,
+        result_path
     }
     for _, appid in ipairs(missing) do
-        table.insert(command, quote_arg(appid))
+        table.insert(arguments, appid)
     end
 
-    local ok = run_minimized_command(table.concat(command, " "), false)
+    local ok = run_hidden_console_process("cscript.exe", arguments)
     if not ok then
         return names
     end
@@ -1867,7 +2308,9 @@ local function status_direct(payload)
         selectedThemeId = trim(get_prop(settings, "SelectedThemeId", "selectedThemeId", "ThemeId", "themeId", "")),
         fsAvailable = fs_ok and fs ~= nil,
         fsListAvailable = fs_ok and fs ~= nil and fs.list ~= nil,
-        backendMode = "lua-inline-wsh-installer"
+        backendMode = "lua-hidden-console-worker",
+        hiddenConsole = read_json(hidden_console_state_path(), {}),
+        autoUpdate = read_json(auto_update_status_path(), {})
     }
 end
 
@@ -2433,22 +2876,21 @@ function run_wscript_installer(payload)
         morrenus_arg = "-"
     end
 
-    local command = table.concat({
-        "cscript.exe",
+    local arguments = {
         "//Nologo",
-        quote_arg(installer),
-        quote_arg(root),
-        quote_arg(steam_path),
-        quote_arg(active_script_directory()),
-        quote_arg(tostring(appid)),
-        quote_arg(app_name),
-        quote_arg(preferred),
-        quote_arg(morrenus_arg),
-        quote_arg(result_path)
-    }, " ")
+        installer,
+        root,
+        steam_path,
+        active_script_directory(),
+        tostring(appid),
+        app_name,
+        preferred,
+        morrenus_arg,
+        result_path
+    }
 
     log_info("SkyTools installer iniciado para appid=" .. tostring(appid))
-    local ok = run_minimized_command(command, false)
+    local ok = run_hidden_console_process("cscript.exe", arguments)
     local exec_result = ""
     if not ok then
         return {
@@ -2506,21 +2948,11 @@ local function repair_script_path(kind)
 end
 
 local function launch_elevated_powershell(script_path)
-    local vbs_path = ensure_launcher("run-elevated-powershell.vbs", table.concat({
-        'Set app = CreateObject("Shell.Application")',
-        'scriptPath = ""',
-        'If WScript.Arguments.Count > 0 Then scriptPath = WScript.Arguments.Item(0)',
-        'If scriptPath <> "" Then',
-        '  args = "-NoProfile -ExecutionPolicy Bypass -File " & Chr(34) & scriptPath & Chr(34)',
-        '  app.ShellExecute "powershell.exe", args, "", "runas", 7',
-        'End If'
-    }, "\r\n"))
-    local ok = run_minimized_command("cscript.exe //Nologo " .. quote_arg(vbs_path) .. " " .. quote_arg(script_path), false)
-    return ok
+    return run_hidden_console_powershell_file(script_path, true)
 end
 
 local function run_powershell_script(script_path)
-    return run_minimized_command("powershell.exe -WindowStyle Minimized -NoProfile -ExecutionPolicy Bypass -File " .. quote_arg(script_path), false)
+    return run_hidden_console_powershell_file(script_path, false)
 end
 
 local function run_repair_direct(payload)
@@ -2593,16 +3025,14 @@ local function find_fix_sources_direct(payload)
     if is_file(helper) then
         local result_path = job_result_path("fixes-" .. appid)
         delete_file(result_path)
-        local command = table.concat({
-            "cscript.exe",
+        run_hidden_console_process("cscript.exe", {
             "//Nologo",
-            quote_arg(helper),
-            quote_arg(result_path),
-            quote_arg(appid),
-            quote_arg(name),
-            quote_arg(requested_kind)
-        }, " ")
-        run_minimized_command(command, false)
+            helper,
+            result_path,
+            appid,
+            name,
+            requested_kind
+        })
         local waited = 0
         while waited < 15000 and not is_file(result_path) do
             sleep_ms(250)
@@ -2923,20 +3353,14 @@ function cleanup_fix_residuals(appid)
 
     local extract_path = join_path(root, "skytools-fix-" .. id .. "-extract")
     local backup_path = join_path(root, "fix-backups\\" .. id)
-    local command = table.concat({
-        "powershell.exe",
-        "-WindowStyle",
-        "Minimized",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        quote_arg(
-            "Remove-Item -LiteralPath " .. ps_quote(extract_path) .. " -Recurse -Force -ErrorAction SilentlyContinue; " ..
-            "Remove-Item -LiteralPath " .. ps_quote(backup_path) .. " -Recurse -Force -ErrorAction SilentlyContinue"
-        )
-    }, " ")
-    run_minimized_command(command, false)
+    local cleanup_script = join_path(root, "skytools-cleanup-fix-" .. id .. ".ps1")
+    write_file(cleanup_script, table.concat({
+        "$ErrorActionPreference = 'SilentlyContinue'",
+        "Remove-Item -LiteralPath " .. ps_quote(extract_path) .. " -Recurse -Force -ErrorAction SilentlyContinue",
+        "Remove-Item -LiteralPath " .. ps_quote(backup_path) .. " -Recurse -Force -ErrorAction SilentlyContinue",
+        "if ($PSCommandPath) { Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue }"
+    }, "\r\n"))
+    run_powershell_script(cleanup_script)
 end
 
 local function remove_fix_direct(payload)
@@ -3187,7 +3611,9 @@ function SkyToolsInjectionStatus()
         steamPath = detect_steam_path(),
         pluginDir = plugin_dir(),
         dataPath = data_root(),
-        backendMode = "lua-inline-wsh-installer",
+        backendMode = "lua-hidden-console-worker",
+        hiddenConsole = read_json(hidden_console_state_path(), {}),
+        autoUpdate = read_json(auto_update_status_path(), {}),
         browserJsId = runtime.browser_js_id,
         browserCssId = runtime.browser_css_id
     })
@@ -3324,6 +3750,8 @@ _G["skytools_integration"] = skytools_integration
 local function on_load()
     pcall(function()
         log_info("SkyTools Lua backend carregado em " .. safe_backend_path())
+        start_hidden_console_worker()
+        enqueue_auto_update_check()
         millennium.ready()
     end)
     pcall(copy_public_assets)
@@ -3331,6 +3759,7 @@ local function on_load()
 end
 
 local function on_unload()
+    pcall(stop_hidden_console_worker)
     if millennium.remove_browser_module ~= nil then
         if runtime.browser_js_id ~= nil and runtime.browser_js_id ~= 0 then
             pcall(millennium.remove_browser_module, runtime.browser_js_id)

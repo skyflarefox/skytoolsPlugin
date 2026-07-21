@@ -45,10 +45,10 @@
       + "}";
   }
 
-  function readText(path) {
+  function readTextWithCharset(path, charset) {
     var stream = new ActiveXObject("ADODB.Stream");
     stream.Type = 2;
-    stream.Charset = "utf-8";
+    stream.Charset = charset;
     stream.Open();
     stream.LoadFromFile(path);
     var text = stream.ReadText();
@@ -56,9 +56,28 @@
     return text;
   }
 
+  function readText(path) {
+    var charsets = ["utf-8", "windows-1252", "unicode"];
+    for (var i = 0; i < charsets.length; i += 1) {
+      try {
+        return readTextWithCharset(path, charsets[i]);
+      } catch (_) {
+      }
+    }
+    var file = fso.OpenTextFile(path, 1, false);
+    var text = file.ReadAll();
+    file.Close();
+    return text;
+  }
+
+  function stripLuaComments(text) {
+    text = String(text || "").replace(/--\[(=*)\[[\s\S]*?\]\1\]/g, "");
+    return text.replace(/--[^\r\n]*/g, "");
+  }
+
   function countDlcs(path, appid) {
     try {
-      var text = readText(path);
+      var text = stripLuaComments(readText(path));
       var regex = /addappid\s*\(\s*(\d+)/ig;
       var seen = {};
       var count = 0;

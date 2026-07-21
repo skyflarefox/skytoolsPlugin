@@ -1,1 +1,406 @@
-{"success":true,"error":"","data":[{"name":"GRID 2","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":36,"gameName":"GRID 2","hasAppliedFix":false,"gamePath":"","fileName":"44350.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/44350\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":44350,"metadataLoading":false,"appId":44350,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\44350.lua","hasDenuvo":false},{"name":"Far Cry 3","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":25,"gameName":"Far Cry 3","hasAppliedFix":false,"gamePath":"","fileName":"220240.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/220240\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":220240,"metadataLoading":false,"appId":220240,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\220240.lua","hasDenuvo":false},{"name":"Resident Evil 6","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":14,"gameName":"Resident Evil 6","hasAppliedFix":false,"gamePath":"","fileName":"221040.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/221040\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":221040,"metadataLoading":false,"appId":221040,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\221040.lua","hasDenuvo":false},{"name":"The Binding of Isaac: Rebirth","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":16,"gameName":"The Binding of Isaac: Rebirth","hasAppliedFix":false,"gamePath":"","fileName":"250900.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/250900\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":250900,"metadataLoading":false,"appId":250900,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\250900.lua","hasDenuvo":false},{"name":"iRacing","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":4,"gameName":"iRacing","hasAppliedFix":false,"gamePath":"","fileName":"266410.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/266410\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":266410,"metadataLoading":false,"appId":266410,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\266410.lua","hasDenuvo":false},{"name":"American Truck Simulator","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":66,"gameName":"American Truck Simulator","hasAppliedFix":false,"gamePath":"","fileName":"270880.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/270880\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":270880,"metadataLoading":false,"appId":270880,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\270880.lua","hasDenuvo":false},{"name":"METAL GEAR SOLID V: THE PHANTOM PAIN","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":16,"gameName":"METAL GEAR SOLID V: THE PHANTOM PAIN","hasAppliedFix":false,"gamePath":"","fileName":"287700.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/287700\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":287700,"metadataLoading":false,"appId":287700,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\287700.lua","hasDenuvo":false},{"name":"DEAD OR ALIVE 5 Last Round: Core Fighters","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":75,"gameName":"DEAD OR ALIVE 5 Last Round: Core Fighters","hasAppliedFix":false,"gamePath":"","fileName":"311730.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/311730\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":311730,"metadataLoading":false,"appId":311730,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\311730.lua","hasDenuvo":false},{"name":"DRAGON BALL XENOVERSE","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":10,"gameName":"DRAGON BALL XENOVERSE","hasAppliedFix":false,"gamePath":"","fileName":"323470.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/323470\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":323470,"metadataLoading":false,"appId":323470,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\323470.lua","hasDenuvo":false},{"name":"Angels Fall First","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"Angels Fall First","hasAppliedFix":false,"gamePath":"","fileName":"367270.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/367270\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":367270,"metadataLoading":false,"appId":367270,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\367270.lua","hasDenuvo":false},{"name":"Wallpaper Engine","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Wallpaper Engine","hasAppliedFix":false,"gamePath":"","fileName":"431960.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/431960\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":431960,"metadataLoading":false,"appId":431960,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\431960.lua","hasDenuvo":false},{"name":"Hot Dogs, Horseshoes & Hand Grenades","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Hot Dogs, Horseshoes & Hand Grenades","hasAppliedFix":false,"gamePath":"","fileName":"450540.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/450540\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":450540,"metadataLoading":false,"appId":450540,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\450540.lua","hasDenuvo":false},{"name":"DRAGON BALL XENOVERSE 2","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":40,"gameName":"DRAGON BALL XENOVERSE 2","hasAppliedFix":false,"gamePath":"","fileName":"454650.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/454650\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":454650,"metadataLoading":false,"appId":454650,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\454650.lua","hasDenuvo":false},{"name":"PC Building Simulator","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":26,"gameName":"PC Building Simulator","hasAppliedFix":false,"gamePath":"c:\/program files (x86)\/steam\\steamapps\\common\\PC Building Simulator","fileName":"621060.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/621060\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":621060,"metadataLoading":false,"appId":621060,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\621060.lua","hasDenuvo":false},{"name":"Prehistoric Kingdom","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"Prehistoric Kingdom","hasAppliedFix":false,"gamePath":"","fileName":"666150.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/666150\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":666150,"metadataLoading":false,"appId":666150,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\666150.lua","hasDenuvo":false},{"name":"Atomic Heart","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":12,"gameName":"Atomic Heart","hasAppliedFix":false,"gamePath":"","fileName":"668580.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/668580\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":668580,"metadataLoading":false,"appId":668580,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\668580.lua","hasDenuvo":false},{"name":"MudRunner","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":8,"gameName":"MudRunner","hasAppliedFix":false,"gamePath":"","fileName":"675010.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/675010\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":675010,"metadataLoading":false,"appId":675010,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\675010.lua","hasDenuvo":false},{"name":"DRAGON BALL FighterZ","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":37,"gameName":"DRAGON BALL FighterZ","hasAppliedFix":false,"gamePath":"","fileName":"678950.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/678950\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":678950,"metadataLoading":false,"appId":678950,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\678950.lua","hasDenuvo":false},{"name":"Granblue Fantasy: Relink","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":29,"gameName":"Granblue Fantasy: Relink","hasAppliedFix":false,"gamePath":"","fileName":"881020.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/881020\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":881020,"metadataLoading":false,"appId":881020,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\881020.lua","hasDenuvo":false},{"name":"Resident Evil 2","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":20,"gameName":"Resident Evil 2","hasAppliedFix":false,"gamePath":"","fileName":"883710.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/883710\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":883710,"metadataLoading":false,"appId":883710,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\883710.lua","hasDenuvo":false},{"name":"Hogwarts Legacy","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":13,"gameName":"Hogwarts Legacy","hasAppliedFix":false,"gamePath":"","fileName":"990080.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/990080\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":990080,"metadataLoading":false,"appId":990080,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\990080.lua","hasDenuvo":false},{"name":"Red Dead Redemption 2","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":11,"gameName":"Red Dead Redemption 2","hasAppliedFix":false,"gamePath":"","fileName":"1174180.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1174180\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1174180,"metadataLoading":false,"appId":1174180,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1174180.lua","hasDenuvo":false},{"name":"Need for Speed™ Heat","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":21,"gameName":"Need for Speed™ Heat","hasAppliedFix":false,"gamePath":"c:\/program files (x86)\/steam\\steamapps\\common\\Need for Speed Heat","fileName":"1222680.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1222680\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1222680,"metadataLoading":false,"appId":1222680,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1222680.lua","hasDenuvo":false},{"name":"Jurassic World Evolution 2","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Jurassic World Evolution 2","hasAppliedFix":false,"gamePath":"","fileName":"1244460.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1244460\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1244460,"metadataLoading":false,"appId":1244460,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1244460.lua","hasDenuvo":false},{"name":"Borderlands 4","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":6,"gameName":"Borderlands 4","hasAppliedFix":false,"gamePath":"","fileName":"1285190.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1285190\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1285190,"metadataLoading":false,"appId":1285190,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1285190.lua","hasDenuvo":false},{"name":"UNCHARTED™: Coleção Legado dos Ladrões","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"UNCHARTED™: Coleção Legado dos Ladrões","hasAppliedFix":false,"gamePath":"","fileName":"1659420.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1659420\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1659420,"metadataLoading":false,"appId":1659420,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1659420.lua","hasDenuvo":false},{"name":"Out of Action","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Out of Action","hasAppliedFix":false,"gamePath":"","fileName":"1670780.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1670780\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1670780,"metadataLoading":false,"appId":1670780,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1670780.lua","hasDenuvo":false},{"name":"DELTARUNE","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"DELTARUNE","hasAppliedFix":false,"gamePath":"","fileName":"1671210.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1671210\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1671210,"metadataLoading":false,"appId":1671210,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1671210.lua","hasDenuvo":false},{"name":"Persona 5 Royal","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":10,"gameName":"Persona 5 Royal","hasAppliedFix":false,"gamePath":"","fileName":"1687950.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1687950\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1687950,"metadataLoading":false,"appId":1687950,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1687950.lua","hasDenuvo":false},{"name":"Kingdom Come: Deliverance II","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":17,"gameName":"Kingdom Come: Deliverance II","hasAppliedFix":false,"gamePath":"","fileName":"1771300.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1771300\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1771300,"metadataLoading":false,"appId":1771300,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1771300.lua","hasDenuvo":false},{"name":"Marvel’s Spider-Man Remastered","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":16,"gameName":"Marvel’s Spider-Man Remastered","hasAppliedFix":false,"gamePath":"","fileName":"1817070.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1817070\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1817070,"metadataLoading":false,"appId":1817070,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1817070.lua","hasDenuvo":false},{"name":"DEATH STRANDING DIRECTOR'S CUT","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"DEATH STRANDING DIRECTOR'S CUT","hasAppliedFix":false,"gamePath":"","fileName":"1850570.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1850570\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1850570,"metadataLoading":false,"appId":1850570,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1850570.lua","hasDenuvo":false},{"name":"The Last of Us™ Part I","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":6,"gameName":"The Last of Us™ Part I","hasAppliedFix":false,"gamePath":"","fileName":"1888930.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1888930\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1888930,"metadataLoading":false,"appId":1888930,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1888930.lua","hasDenuvo":false},{"name":"Data Center Simulator Game","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Data Center Simulator Game","hasAppliedFix":false,"gamePath":"","fileName":"1917160.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1917160\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1917160,"metadataLoading":false,"appId":1917160,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1917160.lua","hasDenuvo":false},{"name":"Jusant","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Jusant","hasAppliedFix":false,"gamePath":"","fileName":"1977170.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1977170\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1977170,"metadataLoading":false,"appId":1977170,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1977170.lua","hasDenuvo":false},{"name":"Digimon Story Time Stranger","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":14,"gameName":"Digimon Story Time Stranger","hasAppliedFix":false,"gamePath":"","fileName":"1984270.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/1984270\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":1984270,"metadataLoading":false,"appId":1984270,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\1984270.lua","hasDenuvo":false},{"name":"GERONIMO","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"GERONIMO","hasAppliedFix":false,"gamePath":"","fileName":"2019620.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2019620\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2019620,"metadataLoading":false,"appId":2019620,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2019620.lua","hasDenuvo":false},{"name":"Resident Evil 4","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":29,"gameName":"Resident Evil 4","hasAppliedFix":false,"gamePath":"","fileName":"2050650.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2050650\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2050650,"metadataLoading":false,"appId":2050650,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2050650.lua","hasDenuvo":false},{"name":"BrokenLore: UNFOLLOW","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"BrokenLore: UNFOLLOW","hasAppliedFix":false,"gamePath":"","fileName":"2133830.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2133830\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2133830,"metadataLoading":false,"appId":2133830,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2133830.lua","hasDenuvo":false},{"name":"John Carpenter's Toxic Commando","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":4,"gameName":"John Carpenter's Toxic Commando","hasAppliedFix":false,"gamePath":"","fileName":"2157830.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2157830\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2157830,"metadataLoading":false,"appId":2157830,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2157830.lua","hasDenuvo":false},{"name":"Shipwrecked 64","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Shipwrecked 64","hasAppliedFix":false,"gamePath":"","fileName":"2160220.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2160220\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2160220,"metadataLoading":false,"appId":2160220,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2160220.lua","hasDenuvo":false},{"name":"Assassin's Creed Valhalla","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":33,"gameName":"Assassin's Creed Valhalla","hasAppliedFix":false,"gamePath":"","fileName":"2208920.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2208920\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2208920,"metadataLoading":false,"appId":2208920,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2208920.lua","hasDenuvo":false},{"name":"LEGO® Batman™: O Legado do Cavaleiro das Trevas","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":8,"gameName":"LEGO® Batman™: O Legado do Cavaleiro das Trevas","hasAppliedFix":false,"gamePath":"","fileName":"2215200.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2215200\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2215200,"metadataLoading":false,"appId":2215200,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2215200.lua","hasDenuvo":false},{"name":"Echoes of Aincrad","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":9,"gameName":"Echoes of Aincrad","hasAppliedFix":false,"gamePath":"","fileName":"2244210.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2244210\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2244210,"metadataLoading":false,"appId":2244210,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2244210.lua","hasDenuvo":false},{"name":"Farming Simulator 25","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":36,"gameName":"Farming Simulator 25","hasAppliedFix":false,"gamePath":"","fileName":"2300320.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2300320\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2300320,"metadataLoading":false,"appId":2300320,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2300320.lua","hasDenuvo":false},{"name":"MOUSE: P.I. For Hire","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"MOUSE: P.I. For Hire","hasAppliedFix":false,"gamePath":"","fileName":"2416450.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2416450\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2416450,"metadataLoading":false,"appId":2416450,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2416450.lua","hasDenuvo":false},{"name":"inZOI","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"inZOI","hasAppliedFix":false,"gamePath":"","fileName":"2456740.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2456740\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2456740,"metadataLoading":false,"appId":2456740,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2456740.lua","hasDenuvo":false},{"name":"Forza Horizon 6","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":18,"gameName":"Forza Horizon 6","hasAppliedFix":false,"gamePath":"","fileName":"2483190.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2483190\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2483190,"metadataLoading":false,"appId":2483190,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2483190.lua","hasDenuvo":false},{"name":"Red Dead Redemption","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Red Dead Redemption","hasAppliedFix":false,"gamePath":"c:\/program files (x86)\/steam\\steamapps\\common\\Red Dead Redemption","fileName":"2668510.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2668510\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2668510,"metadataLoading":false,"appId":2668510,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2668510.lua","hasDenuvo":false},{"name":"Supermarket Simulator","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"Supermarket Simulator","hasAppliedFix":false,"gamePath":"","fileName":"2670630.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2670630\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2670630,"metadataLoading":false,"appId":2670630,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2670630.lua","hasDenuvo":false},{"name":"Outbound","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"Outbound","hasAppliedFix":false,"gamePath":"","fileName":"2681030.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2681030\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2681030,"metadataLoading":false,"appId":2681030,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2681030.lua","hasDenuvo":false},{"name":"SCP","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"SCP","hasAppliedFix":false,"gamePath":"","fileName":"2745670.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2745670\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2745670,"metadataLoading":false,"appId":2745670,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2745670.lua","hasDenuvo":false},{"name":"Wicked Seed","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Wicked Seed","hasAppliedFix":false,"gamePath":"","fileName":"2767530.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/2767530\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":2767530,"metadataLoading":false,"appId":2767530,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\2767530.lua","hasDenuvo":false},{"name":"Assassin's Creed Mirage","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":36,"gameName":"Assassin's Creed Mirage","hasAppliedFix":false,"gamePath":"","fileName":"3035570.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3035570\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3035570,"metadataLoading":false,"appId":3035570,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3035570.lua","hasDenuvo":false},{"name":"F1® 25","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":14,"gameName":"F1® 25","hasAppliedFix":false,"gamePath":"","fileName":"3059520.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3059520\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3059520,"metadataLoading":false,"appId":3059520,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3059520.lua","hasDenuvo":false},{"name":"Assassin’s Creed Shadows","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":10,"gameName":"Assassin’s Creed Shadows","hasAppliedFix":false,"gamePath":"","fileName":"3159330.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3159330\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3159330,"metadataLoading":false,"appId":3159330,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3159330.lua","hasDenuvo":false},{"name":"DEATH STRANDING 2: ON THE BEACH","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":17,"gameName":"DEATH STRANDING 2: ON THE BEACH","hasAppliedFix":false,"gamePath":"","fileName":"3280350.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3280350\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3280350,"metadataLoading":false,"appId":3280350,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3280350.lua","hasDenuvo":false},{"name":"Crimson Desert","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":5,"gameName":"Crimson Desert","hasAppliedFix":false,"gamePath":"","fileName":"3321460.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3321460\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3321460,"metadataLoading":false,"appId":3321460,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3321460.lua","hasDenuvo":false},{"name":"PRAGMATA","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":5,"gameName":"PRAGMATA","hasAppliedFix":false,"gamePath":"","fileName":"3357650.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3357650\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3357650,"metadataLoading":false,"appId":3357650,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3357650.lua","hasDenuvo":false},{"name":"Summer Days in the Joyful Countryside","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Summer Days in the Joyful Countryside","hasAppliedFix":false,"gamePath":"","fileName":"3606380.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3606380\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3606380,"metadataLoading":false,"appId":3606380,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3606380.lua","hasDenuvo":false},{"name":"Funnel Runners","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Funnel Runners","hasAppliedFix":false,"gamePath":"","fileName":"3712080.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3712080\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3712080,"metadataLoading":false,"appId":3712080,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3712080.lua","hasDenuvo":false},{"name":"Resident Evil Requiem","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":5,"gameName":"Resident Evil Requiem","hasAppliedFix":false,"gamePath":"","fileName":"3764200.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3764200\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3764200,"metadataLoading":false,"appId":3764200,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3764200.lua","hasDenuvo":false},{"name":"007 First Light","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":2,"gameName":"007 First Light","hasAppliedFix":false,"gamePath":"","fileName":"3768760.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3768760\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3768760,"metadataLoading":false,"appId":3768760,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3768760.lua","hasDenuvo":false},{"name":"FATAL FRAME II: Crimson Butterfly REMAKE","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":7,"gameName":"FATAL FRAME II: Crimson Butterfly REMAKE","hasAppliedFix":false,"gamePath":"","fileName":"3920610.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/3920610\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":3920610,"metadataLoading":false,"appId":3920610,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\3920610.lua","hasDenuvo":false},{"name":"Forest Escape: Last Train","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":4,"gameName":"Forest Escape: Last Train","hasAppliedFix":false,"gamePath":"","fileName":"4090360.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4090360\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4090360,"metadataLoading":false,"appId":4090360,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4090360.lua","hasDenuvo":false},{"name":"Tokyo Valkyries","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Tokyo Valkyries","hasAppliedFix":false,"gamePath":"","fileName":"4093240.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4093240\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4093240,"metadataLoading":false,"appId":4093240,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4093240.lua","hasDenuvo":false},{"name":"DEAD OR ALIVE 6 Last Round","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":442,"gameName":"DEAD OR ALIVE 6 Last Round","hasAppliedFix":false,"gamePath":"","fileName":"4144680.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4144680\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4144680,"metadataLoading":false,"appId":4144680,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4144680.lua","hasDenuvo":false},{"name":"Cat Chess","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":8,"gameName":"Cat Chess","hasAppliedFix":false,"gamePath":"","fileName":"4163030.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4163030\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4163030,"metadataLoading":false,"appId":4163030,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4163030.lua","hasDenuvo":false},{"name":"Librarian: Tidy Up the Arcane Library!","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":3,"gameName":"Librarian: Tidy Up the Arcane Library!","hasAppliedFix":false,"gamePath":"","fileName":"4197610.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4197610\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4197610,"metadataLoading":false,"appId":4197610,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4197610.lua","hasDenuvo":false},{"name":"Cat Mail Co.","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Cat Mail Co.","hasAppliedFix":false,"gamePath":"","fileName":"4380490.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4380490\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4380490,"metadataLoading":false,"appId":4380490,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4380490.lua","hasDenuvo":false},{"name":"With Your Coworker","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"With Your Coworker","hasAppliedFix":false,"gamePath":"","fileName":"4564320.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4564320\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4564320,"metadataLoading":false,"appId":4564320,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4564320.lua","hasDenuvo":false},{"name":"MECCHA CHAMELEON","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"MECCHA CHAMELEON","hasAppliedFix":false,"gamePath":"c:\/program files (x86)\/steam\\steamapps\\common\\MECCHA CHAMELEON","fileName":"4704690.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4704690\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4704690,"metadataLoading":false,"appId":4704690,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4704690.lua","hasDenuvo":false},{"name":"Supermarket Chaos","scriptDirectory":"c:\/program files (x86)\/steam\\config\\stplug-in","dlcCount":1,"gameName":"Supermarket Chaos","hasAppliedFix":false,"gamePath":"","fileName":"4800590.lua","isDisabled":false,"isSteamInstalled":false,"imageUrl":"https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/4800590\/header.jpg","hasAvailableFix":false,"metadataLoaded":false,"appid":4800590,"metadataLoading":false,"appId":4800590,"fullPath":"c:\/program files (x86)\/steam\\config\\stplug-in\\4800590.lua","hasDenuvo":false}]}
+﻿{
+    "success":  true,
+    "data":  [
+                 {
+                     "appId":  8190,
+                     "fileName":  "8190.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\8190.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  26,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  227300,
+                     "fileName":  "227300.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\227300.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  109,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  412020,
+                     "fileName":  "412020.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\412020.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  9,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  448280,
+                     "fileName":  "448280.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\448280.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  486780,
+                     "fileName":  "486780.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\486780.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  488310,
+                     "fileName":  "488310.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\488310.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  620980,
+                     "fileName":  "620980.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\620980.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  259,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  629730,
+                     "fileName":  "629730.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\629730.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  668580,
+                     "fileName":  "668580.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\668580.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  678950,
+                     "fileName":  "678950.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\678950.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  37,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  701160,
+                     "fileName":  "701160.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\701160.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  11,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  731490,
+                     "fileName":  "731490.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\731490.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  2,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  762650,
+                     "fileName":  "762650.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\762650.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  6,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  804490,
+                     "fileName":  "804490.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\804490.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  815370,
+                     "fileName":  "815370.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\815370.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  945360,
+                     "fileName":  "945360.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\945360.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  990380,
+                     "fileName":  "990380.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\990380.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1091500,
+                     "fileName":  "1091500.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1091500.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  48,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1094390,
+                     "fileName":  "1094390.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1094390.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1167630,
+                     "fileName":  "1167630.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1167630.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  6,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1458140,
+                     "fileName":  "1458140.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1458140.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  7,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1599660,
+                     "fileName":  "1599660.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1599660.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  24,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1663850,
+                     "fileName":  "1663850.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1663850.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1672970,
+                     "fileName":  "1672970.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1672970.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  12,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1683340,
+                     "fileName":  "1683340.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1683340.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1817070,
+                     "fileName":  "1817070.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1817070.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  15,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1888930,
+                     "fileName":  "1888930.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1888930.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1933000,
+                     "fileName":  "1933000.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1933000.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2215200,
+                     "fileName":  "2215200.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2215200.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  6,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2300320,
+                     "fileName":  "2300320.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2300320.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  36,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2300840,
+                     "fileName":  "2300840.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2300840.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2358720,
+                     "fileName":  "2358720.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2358720.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  2,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2406770,
+                     "fileName":  "2406770.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2406770.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2416450,
+                     "fileName":  "2416450.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2416450.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2440510,
+                     "fileName":  "2440510.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2440510.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  42,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2483190,
+                     "fileName":  "2483190.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2483190.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  18,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2531310,
+                     "fileName":  "2531310.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2531310.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2669410,
+                     "fileName":  "2669410.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2669410.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2677660,
+                     "fileName":  "2677660.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2677660.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  16,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2868840,
+                     "fileName":  "2868840.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2868840.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3017860,
+                     "fileName":  "3017860.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3017860.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  8,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3240220,
+                     "fileName":  "3240220.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3240220.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3321460,
+                     "fileName":  "3321460.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3321460.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3357650,
+                     "fileName":  "3357650.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3357650.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3404260,
+                     "fileName":  "3404260.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3404260.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3405340,
+                     "fileName":  "3405340.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3405340.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  2,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3489700,
+                     "fileName":  "3489700.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3489700.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  8,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3756010,
+                     "fileName":  "3756010.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3756010.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3768760,
+                     "fileName":  "3768760.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3768760.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  22,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  4704690,
+                     "fileName":  "4704690.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\4704690.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 }
+             ],
+    "error":  ""
+}
