@@ -25,7 +25,8 @@ local runtime = {
     browser_css_id = 0,
     steam_path = nil,
     last_injection = {},
-    cache = {}
+    cache = {},
+    operations = {}
 }
 
 local function safe_backend_path()
@@ -235,6 +236,24 @@ local function delete_directory(path)
     end)
 end
 
+local function copy_directory(source, target)
+    source = tostring(source or "")
+    target = tostring(target or "")
+    if source == "" or target == "" or not path_exists(source) then
+        return false
+    end
+    delete_directory(target)
+    mkdirs(target)
+    local command = "cmd.exe /c xcopy " .. quote_arg(source) .. " " .. quote_arg(target) .. " /E /I /Y /Q >nul 2>nul"
+    local ok = pcall(function()
+        if utils ~= nil and utils.exec ~= nil then
+            return utils.exec(command)
+        end
+        return os.execute(command)
+    end)
+    return ok == true
+end
+
 local function copy_file(source, target)
     local data = read_file(source)
     if data == nil then
@@ -260,6 +279,45 @@ local function sync_file_if_different(source, target)
         return true
     end
     return write_file(target, source_data)
+end
+
+local function sync_theme_directory(source, target)
+    source = tostring(source or "")
+    target = tostring(target or "")
+    if source == "" or target == "" or not path_exists(source) then
+        return false
+    end
+
+    mkdirs(target)
+    local copied = false
+    local seen = {}
+
+    local function copy_theme(file_name)
+        file_name = tostring(file_name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if file_name:match("^[%w%._%- ]+%.css$") == nil or seen[file_name] then
+            return
+        end
+        seen[file_name] = true
+        if sync_file_if_different(join_path(source, file_name), join_path(target, file_name)) then
+            copied = true
+        end
+    end
+
+    copy_theme("official-orange.css")
+    copy_theme("ocean-cyan.css")
+    copy_theme("graphite-lime.css")
+    copy_theme("ruby-ember.css")
+
+    if fs_ok and fs ~= nil and fs.list ~= nil then
+        local ok, entries = pcall(fs.list, source)
+        if ok and type(entries) == "table" then
+            for _, entry in ipairs(entries) do
+                copy_theme(tostring(entry):match("[^\\/]+$") or tostring(entry))
+            end
+        end
+    end
+
+    return copied or path_exists(target)
 end
 
 local function json_escape(value)
@@ -393,17 +451,20 @@ local function copy_public_assets()
     local src_css = join_path(public, "skytools.css")
     local src_ico = join_path(public, "skytools_logo.ico")
     local src_png = join_path(public, "skytools_logo.png")
+    local src_themes = join_path(public, "themes")
     local src_fa_solid = join_path(join_path(join_path(public, "fontawesome"), "webfonts"), "fa-solid-900.woff2")
     local js_webkit = copy_file(src_js, join_path(webkit_skytools, "skytools.js"))
     local css_webkit = copy_file(src_css, join_path(webkit_skytools, "skytools.css"))
     local ico_webkit = copy_file(src_ico, join_path(webkit_skytools, "skytools_logo.ico"))
     local png_webkit = copy_file(src_png, join_path(webkit_skytools, "skytools_logo.png"))
+    local themes_webkit = sync_theme_directory(src_themes, join_path(webkit_skytools, "themes"))
     local fa_solid_webkit = copy_file(src_fa_solid, join_path(join_path(join_path(webkit_skytools, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
     local js_steamui_webkit = false
     local css_steamui_webkit = false
     local png_steamui_webkit = false
     local ico_steamui_webkit = false
     local fa_steamui_webkit = false
+    local themes_steamui_webkit = false
 
     if steam_path ~= "" then
         local steamui = join_path(steam_path, "steamui")
@@ -427,6 +488,7 @@ local function copy_public_assets()
         css_steamui_webkit = sync_file_if_different(src_css, join_path(steamui_webkit, "skytools.css"))
         ico_steamui_webkit = sync_file_if_different(src_ico, join_path(steamui_webkit, "skytools_logo.ico"))
         png_steamui_webkit = sync_file_if_different(src_png, join_path(steamui_webkit, "skytools_logo.png"))
+        themes_steamui_webkit = sync_theme_directory(src_themes, join_path(steamui_webkit, "themes"))
         fa_steamui_webkit = sync_file_if_different(src_fa_solid, join_path(join_path(join_path(steamui_webkit, "fontawesome"), "webfonts"), "fa-solid-900.woff2"))
     end
 
@@ -436,11 +498,13 @@ local function copy_public_assets()
         cssWebkit = css_webkit,
         icoWebkit = ico_webkit,
         pngWebkit = png_webkit,
+        themesWebkit = themes_webkit,
         faSolidWebkit = fa_solid_webkit,
         jsSteamUiWebkit = js_steamui_webkit,
         cssSteamUiWebkit = css_steamui_webkit,
         icoSteamUiWebkit = ico_steamui_webkit,
         pngSteamUiWebkit = png_steamui_webkit,
+        themesSteamUiWebkit = themes_steamui_webkit,
         faSteamUiWebkit = fa_steamui_webkit
     }
     log_info("browser assets synced: jsWebkit=" .. tostring(js_webkit) .. ", jsSteamUiWebkit=" .. tostring(js_steamui_webkit))
@@ -524,12 +588,20 @@ local function ensure_launcher(name, content)
     return path
 end
 
-local function json_decode_fallback(text)
-    text = tostring(text or "")
+local function json_decode_fallback(text, depth)
+    text = tostring(text or ""):gsub("^\239\187\191", "")
+    depth = tonumber(depth) or 0
+    if depth > 10 then
+        return nil
+    end
+    if text:match("^%s*$") ~= nil or #text > 2097152 then
+        return nil
+    end
+
     local index = 1
 
     local function skip_ws()
-        while true do
+        while index <= #text do
             local char = text:sub(index, index)
             if char == " " or char == "\n" or char == "\r" or char == "\t" then
                 index = index + 1
@@ -604,7 +676,10 @@ local function json_decode_fallback(text)
         return tonumber(text:sub(start, index - 1))
     end
 
-    local function parse_array()
+    local function parse_array(current_depth)
+        if current_depth > 10 then
+            error("max depth")
+        end
         local result = {}
         index = index + 1
         skip_ws()
@@ -613,7 +688,7 @@ local function json_decode_fallback(text)
             return result
         end
         while true do
-            table.insert(result, parse_value())
+            table.insert(result, parse_value(current_depth + 1))
             skip_ws()
             local char = text:sub(index, index)
             if char == "]" then
@@ -627,7 +702,10 @@ local function json_decode_fallback(text)
         end
     end
 
-    local function parse_object()
+    local function parse_object(current_depth)
+        if current_depth > 10 then
+            error("max depth")
+        end
         local result = {}
         index = index + 1
         skip_ws()
@@ -643,7 +721,7 @@ local function json_decode_fallback(text)
                 error("expected colon")
             end
             index = index + 1
-            result[key] = parse_value()
+            result[key] = parse_value(current_depth + 1)
             skip_ws()
             local char = text:sub(index, index)
             if char == "}" then
@@ -657,12 +735,17 @@ local function json_decode_fallback(text)
         end
     end
 
-    function parse_value()
+    function parse_value(current_depth)
+        current_depth = current_depth or depth
+        if current_depth > 10 then
+            error("max depth")
+        end
         skip_ws()
         local char = text:sub(index, index)
+        if char == "" then error("unexpected end") end
         if char == '"' then return parse_string() end
-        if char == "{" then return parse_object() end
-        if char == "[" then return parse_array() end
+        if char == "{" then return parse_object(current_depth + 1) end
+        if char == "[" then return parse_array(current_depth + 1) end
         if text:sub(index, index + 3) == "true" then
             index = index + 4
             return true
@@ -680,6 +763,10 @@ local function json_decode_fallback(text)
 
     local ok, value = pcall(parse_value)
     if ok then
+        skip_ws()
+        if index <= #text then
+            return nil
+        end
         return value
     end
     return nil
@@ -696,7 +783,7 @@ local function json_decode(text, fallback)
             return decoded
         end
     end
-    local decoded = json_decode_fallback(text)
+    local decoded = json_decode_fallback(text, 0)
     if decoded ~= nil then
         return decoded
     end
@@ -1698,6 +1785,66 @@ local function cached_installed_count()
     return count
 end
 
+local function theme_display_name(id)
+    id = trim(id)
+    if id == "official-orange" then
+        return "Oficial laranja"
+    end
+    if id == "ocean-cyan" then
+        return "Oceano ciano"
+    end
+    if id == "graphite-lime" then
+        return "Grafite lima"
+    end
+    if id == "ruby-ember" then
+        return "Rubi brasa"
+    end
+    local name = id:gsub("[%-_]+", " ")
+    return (name:gsub("^%l", string.upper))
+end
+
+local function list_theme_files()
+    local themes_dir = join_path(join_path(plugin_dir(), "public"), "themes")
+    local themes = {}
+    local seen = {}
+    local function add_theme(file_name)
+        file_name = trim(file_name)
+        if file_name:match("^[%w%._%- ]+%.css$") == nil then
+            return
+        end
+        local id = file_name:gsub("%.css$", "")
+        if seen[id] then
+            return
+        end
+        seen[id] = true
+        table.insert(themes, { id = id, name = theme_display_name(id), file = file_name })
+    end
+
+    add_theme("official-orange.css")
+    add_theme("ocean-cyan.css")
+    add_theme("graphite-lime.css")
+    add_theme("ruby-ember.css")
+    if fs_ok and fs ~= nil and fs.list ~= nil then
+        local ok, entries = pcall(fs.list, themes_dir)
+        if ok and type(entries) == "table" then
+            for _, entry in ipairs(entries) do
+                add_theme(tostring(entry):match("[^\\/]+$") or tostring(entry))
+            end
+        end
+    end
+
+    table.sort(themes, function(left, right)
+        if left.id == "official-orange" then
+            return true
+        end
+        if right.id == "official-orange" then
+            return false
+        end
+        return tostring(left.name) < tostring(right.name)
+    end)
+    return themes
+end
+
 local function status_direct(payload)
     local settings = load_settings()
     return {
@@ -1715,9 +1862,65 @@ local function status_direct(payload)
         injection = runtime.last_injection,
         browserJsId = runtime.browser_js_id,
         browserCssId = runtime.browser_css_id,
+        themes = list_theme_files(),
+        defaultTheme = "official-orange",
+        selectedThemeId = trim(get_prop(settings, "SelectedThemeId", "selectedThemeId", "ThemeId", "themeId", "")),
         fsAvailable = fs_ok and fs ~= nil,
         fsListAvailable = fs_ok and fs ~= nil and fs.list ~= nil,
         backendMode = "lua-inline-wsh-installer"
+    }
+end
+
+local function save_theme_direct(payload)
+    payload = normalize_payload(payload or {})
+    local theme_id = trim(get_prop(payload, "themeId", "ThemeId", "id", "Id", "theme", "Theme", ""))
+    if theme_id == "" or theme_id:match("^[%w%._%- ]+$") == nil then
+        return { success = false, error = "Tema inválido." }
+    end
+
+    local exists = false
+    for _, theme in ipairs(list_theme_files()) do
+        if tostring(theme.id or "") == theme_id then
+            exists = true
+            break
+        end
+    end
+    if not exists then
+        return { success = false, error = "Tema não encontrado." }
+    end
+
+    local settings = load_settings()
+    settings.SelectedThemeId = theme_id
+    if not write_json(settings_path(), settings) then
+        return { success = false, error = "Não foi possível salvar o tema." }
+    end
+    cache_clear()
+    return { themeId = theme_id }
+end
+
+local function theme_direct(payload)
+    payload = payload or {}
+    local requested_id = trim(get_prop(payload, "id", "themeId", "ThemeId", "theme", "Theme", ""))
+    local requested_file = trim(get_prop(payload, "file", "File", "filename", "Filename", ""))
+    if requested_file == "" and requested_id ~= "" then
+        requested_file = requested_id .. ".css"
+    end
+    if requested_file:match("^[%w%._%- ]+%.css$") == nil then
+        return { success = false, error = "Tema inválido." }
+    end
+
+    local themes_dir = join_path(join_path(plugin_dir(), "public"), "themes")
+    local css = read_file(join_path(themes_dir, requested_file))
+    if css == nil or css == "" then
+        return { success = false, error = "Tema não encontrado.", data = { fallbackTheme = "official-orange" } }
+    end
+
+    local id = requested_file:gsub("%.css$", "")
+    return {
+        id = id,
+        name = theme_display_name(id),
+        file = requested_file,
+        css = css
     }
 end
 
@@ -2018,14 +2221,25 @@ local function save_api_settings_direct(payload)
     local preferred = trim(get_first_prop(payload, { "preferred", "preferredApi", "PreferredDownloadApi", "preferredDownloadApi" }, ""))
     local morrenus_key = trim(get_prop(payload, "morrenusApiKey", "MorrenusApiKey", ""))
     local api_order = get_first_prop(payload, { "apiOrder", "ApiOrder", "order", "Order", "apiOrderText", "ApiOrderText", "orderText" }, nil)
+    local selected_theme = trim(get_first_prop(payload, { "selectedThemeId", "SelectedThemeId", "themeId", "ThemeId", "theme", "Theme" }, ""))
+    local changed_without_api_order = false
     if api_order == nil and type(payload) == "table" and is_array(payload) then
         api_order = payload
     end
     if preferred ~= "" then
         settings.PreferredDownloadApi = preferred
+        changed_without_api_order = true
     end
     if morrenus_key ~= "" then
         settings.MorrenusApiKey = morrenus_key
+        changed_without_api_order = true
+    end
+    if selected_theme ~= "" then
+        if selected_theme:match("^[%w%._%- ]+$") == nil then
+            return { success = false, error = "Tema inválido." }
+        end
+        settings.SelectedThemeId = selected_theme
+        changed_without_api_order = true
     end
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
     if type(custom) ~= "table" or not is_array(custom) then
@@ -2034,15 +2248,22 @@ local function save_api_settings_direct(payload)
     if type(api_order) == "table" or type(api_order) == "string" then
         settings.ApiOrder = clean_api_order(api_order, custom, nil)
     else
-        return { success = false, error = "Ordem das APIs não recebida pelo backend." }
+        if not changed_without_api_order then
+            return { success = false, error = "Ordem das APIs não recebida pelo backend." }
+        end
     end
     if not write_json(settings_path(), settings) then
         return { success = false, error = "Não foi possível gravar settings.json." }
     end
     local saved_settings = read_json(settings_path(), {})
-    local saved_order = clean_api_order(get_prop(saved_settings, "ApiOrder", "apiOrder", {}), custom, nil)
-    if not same_string_array(saved_order, settings.ApiOrder) then
-        return { success = false, error = "A ordem das APIs não foi persistida em settings.json." }
+    if type(api_order) == "table" or type(api_order) == "string" then
+        local saved_order = clean_api_order(get_prop(saved_settings, "ApiOrder", "apiOrder", {}), custom, nil)
+        if not same_string_array(saved_order, settings.ApiOrder) then
+            return { success = false, error = "A ordem das APIs não foi persistida em settings.json." }
+        end
+    end
+    if selected_theme ~= "" and trim(get_prop(saved_settings, "SelectedThemeId", "selectedThemeId", "")) ~= selected_theme then
+        return { success = false, error = "O tema não foi persistido em settings.json." }
     end
     cache_clear()
     return apis_direct()
@@ -2499,18 +2720,6 @@ local function apply_fix_direct(payload)
         end
     end
     if url == "" then
-        local file_name = sky_fix_file_name(appid, source, payload)
-        if archive_extension(file_name) ~= "" then
-            local lower_name = file_name:lower()
-            if lower_name == appid .. "_online.zip" or lower_name == appid .. "_generic.zip" then
-                url = "https://github.com/skyflarefox/fix/releases/download/fix/" .. file_name:gsub(" ", "%%20")
-                source.downloadUrl = url
-                source.fileName = file_name
-                source.provider = trim(get_prop(source, "provider", "Provider", "Sky"))
-            end
-        end
-    end
-    if url == "" then
         local requested_kind = ""
         local inferred_file = sky_fix_file_name(appid, source, payload)
         local inferred_lower = inferred_file:lower()
@@ -2552,7 +2761,7 @@ local function apply_fix_direct(payload)
     if extension == "" then
         return {
             success = false,
-            error = "Aplicacão automática suporta apenas pacotes .zip, .rar e .7z.",
+            error = "Aplicação automática suporta apenas pacotes .zip, .rar e .7z.",
             url = url
         }
     end
@@ -2563,30 +2772,48 @@ local function apply_fix_direct(payload)
     local script_path = join_path(data_root(), "skytools-apply-fix-" .. appid .. ".ps1")
     local package_path = join_path(data_root(), "skytools-fix-" .. appid .. "." .. extension)
     local extract_path = join_path(data_root(), "skytools-fix-" .. appid .. "-extract")
+    local result_path = job_result_path("apply-fix-" .. appid)
     delete_file(script_path)
     delete_file(package_path)
+    delete_file(result_path)
     local source_type = trim(get_prop(source, "type", "Type", "Fix"))
     local source_provider = trim(get_prop(source, "provider", "Provider", "Sky"))
     local script = table.concat({
         "$ErrorActionPreference = 'Stop'",
+        "$downloadFinished = $false",
+        "$antivirusMessage = 'Não foi possível concluir a operação com êxito porque o Antivírus deletou a correção.'",
+        "function Write-SkyToolsResult([bool]$success, [string]$message, [int]$files) {",
+        "  $result = [ordered]@{ success = $success; error = $message; files = $files } | ConvertTo-Json -Compress",
+        "  Set-Content -LiteralPath " .. ps_quote(result_path) .. " -Value $result -Encoding UTF8",
+        "}",
+        "function Assert-PackageAvailable {",
+        "  if (!(Test-Path -LiteralPath $package)) { throw $antivirusMessage }",
+        "  $packageItem = Get-Item -LiteralPath $package -ErrorAction SilentlyContinue",
+        "  if (!$packageItem -or $packageItem.Length -le 0) { throw 'Não foi possível concluir a operação com êxito porque o Antivírus deletou a correção.' }",
+        "}",
         "try {",
         "  $url = " .. ps_quote(url),
         "  $gamePath = " .. ps_quote(game_path),
         "  $package = " .. ps_quote(package_path),
         "  $extract = " .. ps_quote(extract_path),
+        "  $appliedCount = 0",
         "  if (!(Test-Path -LiteralPath $gamePath)) { throw 'Pasta do jogo não encontrada.' }",
         "  Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue",
         "  Remove-Item -LiteralPath $package -Force -ErrorAction SilentlyContinue",
         "  New-Item -ItemType Directory -Path (Split-Path -Parent $package) -Force | Out-Null",
         "  New-Item -ItemType Directory -Path $extract -Force | Out-Null",
         "  Start-BitsTransfer -Source $url -Destination $package -TransferType Download | Out-Null", -- fixed tempo para baixar 
+        "  $downloadFinished = $true",
+        "  Assert-PackageAvailable",
         "  $ext = [IO.Path]::GetExtension($package).ToLowerInvariant()",
         "  function Expand-FixArchive {",
+        "    Assert-PackageAvailable",
         "    if ($ext -eq '.zip') {",
-        "      try { Expand-Archive -LiteralPath $package -DestinationPath $extract -Force; return } catch { Write-Host $_; Start-Sleep -Seconds 5; exit 1 }",
+        "      try { Expand-Archive -LiteralPath $package -DestinationPath $extract -Force; return } catch { throw }",
         "    }",
         "    $tar = (Get-Command tar.exe -ErrorAction SilentlyContinue).Source",
         "    if ($tar) {",
+        "      Assert-PackageAvailable",
         "      & $tar -xf $package -C $extract",
         "      if ($LASTEXITCODE -eq 0) { return }",
         "    }",
@@ -2614,7 +2841,14 @@ local function apply_fix_direct(payload)
         "    if (!$dest.StartsWith($gameRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }",
         "    New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null",
         "    Copy-Item -LiteralPath $file.FullName -Destination $dest -Force",
+        "    $appliedCount += 1",
         "  }",
+        "  Write-SkyToolsResult $true '' $appliedCount",
+        "} catch {",
+        "  $message = $_.Exception.Message",
+        "  if ($downloadFinished -and !(Test-Path -LiteralPath $package)) { $message = $antivirusMessage }",
+        "  if (!$message) { $message = [string]$_ }",
+        "  Write-SkyToolsResult $false $message 0",
         "} finally {",
         "  Remove-Item -LiteralPath " .. ps_quote(extract_path) .. " -Recurse -Force -ErrorAction SilentlyContinue",
         "  Remove-Item -LiteralPath " .. ps_quote(package_path) .. " -Force -ErrorAction SilentlyContinue",
@@ -2625,6 +2859,26 @@ local function apply_fix_direct(payload)
     local ok = run_powershell_script(script_path)
     if not ok then
         return { success = false, error = "Não foi possível iniciar a aplicação da correção." }
+    end
+
+    local waited = 0
+    while waited < 900000 and not is_file(result_path) do
+        sleep_ms(500)
+        waited = waited + 500
+    end
+    if not is_file(result_path) then
+        cleanup_fix_residuals(appid)
+        return { success = false, error = "A aplicação da correção não respondeu a tempo." }
+    end
+    local apply_result = read_json(result_path, nil)
+    delete_file(result_path)
+    if type(apply_result) ~= "table" then
+        cleanup_fix_residuals(appid)
+        return { success = false, error = "Não foi possível ler o resultado da aplicação da correção." }
+    end
+    if apply_result.success ~= true then
+        cleanup_fix_residuals(appid)
+        return { success = false, error = trim(get_prop(apply_result, "error", "Error", "")) ~= "" and trim(get_prop(apply_result, "error", "Error", "")) or "Não foi possível aplicar a correção." }
     end
 
     local records_path = join_path(data_root(), "fix-actions.json")
@@ -2672,7 +2926,7 @@ function cleanup_fix_residuals(appid)
     local command = table.concat({
         "powershell.exe",
         "-WindowStyle",
-        "Hidden",
+        "Minimized",
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
@@ -2727,9 +2981,46 @@ local function response_from_result(result)
     return { success = true, data = result, error = "" }
 end
 
+local function app_operation_key(payload)
+    local appid = payload_appid(payload)
+    if appid == nil or appid <= 0 then
+        return ""
+    end
+    return "appid:" .. tostring(appid)
+end
+
+local function with_app_operation_lock(payload, label, callback)
+    local key = app_operation_key(payload)
+    if key == "" then
+        return callback()
+    end
+
+    local now = os.time()
+    local active = runtime.operations[key]
+    if type(active) == "table" and tonumber(active.expiresAt or 0) > now then
+        return {
+            success = false,
+            error = "Já existe uma operação em andamento para este jogo. Aguarde terminar antes de tentar novamente."
+        }
+    end
+
+    runtime.operations[key] = {
+        label = tostring(label or "operação"),
+        expiresAt = now + 900
+    }
+    local ok, result = pcall(callback)
+    runtime.operations[key] = nil
+    if ok then
+        return result
+    end
+    return { success = false, error = tostring(result or "Falha durante a operação.") }
+end
+
 local function dispatch_inline(method, payload)
     payload = payload or {}
     if method == "status" then return response_from_result(status_direct(payload)) end
+    if method == "save-theme" then return response_from_result(save_theme_direct(payload)) end
+    if method == "theme" then return response_from_result(theme_direct(payload)) end
     if method == "installed" then return response_from_result(installed_direct()) end
     if method == "steam-installed" then return response_from_result(steam_installed_direct()) end
     if method == "name-cache" then
@@ -2747,7 +3038,9 @@ local function dispatch_inline(method, payload)
     end
     if method == "delete-api" then return response_from_result(delete_api_direct(payload)) end
     if method == "remove-game" then
-        local result = remove_game_direct(payload)
+        local result = with_app_operation_lock(payload, "remove-game", function()
+            return remove_game_direct(payload)
+        end)
         return response_from_result(result)
     end
     if method == "backup-export" then return response_from_result(backup_export_direct(payload)) end
@@ -2760,15 +3053,23 @@ local function dispatch_inline(method, payload)
     if method == "denuvo-fix" then return response_from_result(simple_fix_sources(payload, "denuvo")) end
     if method == "repair" then return response_from_result(run_repair_direct(payload)) end
     if method == "apply-fix" then
-        local result = apply_fix_direct(payload)
+        local result = with_app_operation_lock(payload, "apply-fix", function()
+            return apply_fix_direct(payload)
+        end)
         return response_from_result(result)
     end
     if method == "remove-fix" then
-        local result = remove_fix_direct(payload)
+        local result = with_app_operation_lock(payload, "remove-fix", function()
+            return remove_fix_direct(payload)
+        end)
         return response_from_result(result)
     end
     if method == "integration" then return response_from_result(integration_direct(payload)) end
-    if method == "add-game" then return response_from_result(run_wscript_installer(payload)) end
+    if method == "add-game" then
+        return response_from_result(with_app_operation_lock(payload, "add-game", function()
+            return run_wscript_installer(payload)
+        end))
+    end
     return { success = false, error = "Metodo desconhecido: " .. tostring(method) }
 end
 
@@ -2796,6 +3097,14 @@ function SkyToolsStatus()
         browserCssId = runtime.browser_css_id,
         steamPath = detect_steam_path()
     }, 30)
+end
+
+function SkyToolsTheme(payload)
+    return worker_call("theme", payload or {}, 30)
+end
+
+function SkyToolsSaveTheme(payload)
+    return worker_call("save-theme", payload or {}, 30)
 end
 
 function SkyToolsInstalled()
@@ -2855,7 +3164,7 @@ function SkyToolsDenuvoFix(payload)
 end
 
 function SkyToolsApplyFix(payload)
-    return worker_call("apply-fix", payload or {}, 60)
+    return worker_call("apply-fix", payload or {}, 900)
 end
 
 function SkyToolsRemoveFix(payload)
@@ -2888,6 +3197,16 @@ function skytools_status()
     return SkyToolsStatus()
 end
 _G["skytools_status"] = skytools_status
+
+function skytools_theme(params)
+    return SkyToolsTheme(params or {})
+end
+_G["skytools_theme"] = skytools_theme
+
+function skytools_save_theme(params)
+    return SkyToolsSaveTheme(params or {})
+end
+_G["skytools_save_theme"] = skytools_save_theme
 
 function skytools_installed()
     return SkyToolsInstalled()

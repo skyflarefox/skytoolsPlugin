@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var SKYTOOLS_UI_VERSION = "2026-07-14-restore-backup-ryuu-1";
+  var SKYTOOLS_UI_VERSION = "2026-07-20-theme-local-fallback-1";
 
   if (window.__skytoolsPluginLoaded && window.__skytoolsPluginVersion === SKYTOOLS_UI_VERSION) {
     return;
@@ -19,6 +19,29 @@
 
   var PLUGIN_ID = "skytools-plugin";
   var API_ORDER_STORAGE_KEY = "SkyTools.ApiOrder";
+  var THEME_STORAGE_KEY = "SkyTools.Theme";
+  var THEME_STORAGE_KEYS = [THEME_STORAGE_KEY, "SkyTools.SelectedThemeId", "SkyTools.SelectedTheme"];
+  var DEFAULT_THEME = "official-orange";
+  var BUILT_IN_THEMES = [
+    { id: DEFAULT_THEME, name: "Oficial laranja", file: "official-orange.css" },
+    { id: "ocean-cyan", name: "Oceano ciano", file: "ocean-cyan.css" },
+    { id: "graphite-lime", name: "Grafite lima", file: "graphite-lime.css" },
+    { id: "ruby-ember", name: "Rubi brasa", file: "ruby-ember.css" }
+  ];
+  var BUILT_IN_THEME_VARS = {
+    "official-orange": {
+      "bg": "#17120f", "bg-elevated": "rgba(28, 22, 18, 0.98)", "surface": "rgba(255, 255, 255, 0.035)", "surface-strong": "rgba(255, 255, 255, 0.045)", "surface-muted": "rgba(0, 0, 0, 0.16)", "surface-deep": "rgba(0, 0, 0, 0.28)", "text": "#ffffff", "text-soft": "#f6ddc5", "muted": "#d1a57d", "muted-strong": "#d7b28d", "brand-muted": "#d9ad83", "accent": "#e88914", "accent-strong": "#c24e12", "accent-alt": "#f59e0b", "accent-rgb": "255, 166, 77", "accent-strong-rgb": "194, 78, 18", "accent-text": "#ffd29a", "button-start": "#bf4b10", "button-end": "#e88914", "button-remove-start": "#9f3b0e", "button-remove-end": "#d86510", "success": "#34d399", "success-soft": "#7ee0a3", "danger": "#fb7185", "danger-soft": "#ff8a8a", "danger-text": "#ffb4a8", "warning": "#f2c94c"
+    },
+    "ocean-cyan": {
+      "bg": "#101817", "bg-elevated": "rgba(17, 28, 28, 0.98)", "surface": "rgba(185, 255, 245, 0.04)", "surface-strong": "rgba(185, 255, 245, 0.07)", "surface-muted": "rgba(0, 0, 0, 0.18)", "surface-deep": "rgba(0, 0, 0, 0.32)", "text": "#f5fffd", "text-soft": "#c9f4ed", "muted": "#8ac9c1", "muted-strong": "#a5d8d1", "brand-muted": "#95d5ce", "accent": "#22d3ee", "accent-strong": "#0e7490", "accent-alt": "#14b8a6", "accent-rgb": "34, 211, 238", "accent-strong-rgb": "14, 116, 144", "accent-text": "#b9fbff", "button-start": "#0f766e", "button-end": "#0891b2", "button-remove-start": "#155e75", "button-remove-end": "#0e7490", "success": "#4ade80", "success-soft": "#86efac", "danger": "#fb7185", "danger-soft": "#fda4af", "danger-text": "#fecdd3", "warning": "#facc15"
+    },
+    "graphite-lime": {
+      "bg": "#141611", "bg-elevated": "rgba(23, 26, 19, 0.98)", "surface": "rgba(222, 255, 171, 0.04)", "surface-strong": "rgba(222, 255, 171, 0.07)", "surface-muted": "rgba(0, 0, 0, 0.18)", "surface-deep": "rgba(0, 0, 0, 0.32)", "text": "#fbfff5", "text-soft": "#e2f7c0", "muted": "#bdd38f", "muted-strong": "#d0e5a6", "brand-muted": "#c4dd92", "accent": "#a3e635", "accent-strong": "#4d7c0f", "accent-alt": "#84cc16", "accent-rgb": "163, 230, 53", "accent-strong-rgb": "77, 124, 15", "accent-text": "#ecfccb", "button-start": "#3f6212", "button-end": "#65a30d", "button-remove-start": "#713f12", "button-remove-end": "#a16207", "success": "#22c55e", "success-soft": "#86efac", "danger": "#f87171", "danger-soft": "#fca5a5", "danger-text": "#fecaca", "warning": "#fbbf24"
+    },
+    "ruby-ember": {
+      "bg": "#180f13", "bg-elevated": "rgba(30, 18, 23, 0.98)", "surface": "rgba(255, 214, 224, 0.04)", "surface-strong": "rgba(255, 214, 224, 0.07)", "surface-muted": "rgba(0, 0, 0, 0.17)", "surface-deep": "rgba(0, 0, 0, 0.31)", "text": "#fff8fa", "text-soft": "#ffd8df", "muted": "#dfa0aa", "muted-strong": "#efb5bf", "brand-muted": "#e6a4ae", "accent": "#fb7185", "accent-strong": "#be123c", "accent-alt": "#f97316", "accent-rgb": "251, 113, 133", "accent-strong-rgb": "190, 18, 60", "accent-text": "#ffe4e6", "button-start": "#9f1239", "button-end": "#e11d48", "button-remove-start": "#7f1d1d", "button-remove-end": "#b91c1c", "success": "#34d399", "success-soft": "#86efac", "danger": "#f43f5e", "danger-soft": "#fb7185", "danger-text": "#fecdd3", "warning": "#fbbf24"
+    }
+  };
   var state = {
     lastUrl: "",
     appid: "",
@@ -35,6 +58,12 @@
     fixGamesPromise: null,
     nameCache: {},
     apis: null,
+    themes: BUILT_IN_THEMES.slice(),
+    themeId: readStoredTheme(),
+    themeRequestId: 0,
+    themeCss: "",
+    themeAppliedId: "",
+    themeVars: null,
     apisLoading: false,
     apiForm: null,
     apiOrder: null,
@@ -65,6 +94,7 @@
     backup: "f019",
     repair: "f7d9",
     status: "f05a",
+    settings: "f013",
     close: "f00d",
     refresh: "f021",
     check: "f058",
@@ -162,6 +192,414 @@
       return null;
     }
     return result.data !== undefined ? result.data : result;
+  }
+
+  function readStoredTheme() {
+    try {
+      for (var i = 0; i < THEME_STORAGE_KEYS.length; i += 1) {
+        var stored = String(localStorage.getItem(THEME_STORAGE_KEYS[i]) || "").trim();
+        if (stored) {
+          return stored;
+        }
+      }
+      return DEFAULT_THEME;
+    } catch (_) {
+      return DEFAULT_THEME;
+    }
+  }
+
+  function writeStoredTheme(themeId) {
+    try {
+      var value = themeId || DEFAULT_THEME;
+      for (var i = 0; i < THEME_STORAGE_KEYS.length; i += 1) {
+        localStorage.setItem(THEME_STORAGE_KEYS[i], value);
+      }
+    } catch (_) {
+      // O CSS base mantém o tema oficial mesmo quando o storage da WebView falha.
+    }
+  }
+
+  function saveThemePreference(themeId) {
+    themeId = themeId || DEFAULT_THEME;
+    writeStoredTheme(themeId);
+    function localThemeSavedResult(error) {
+      return {
+        success: true,
+        data: {
+          themeId: themeId,
+          selectedThemeId: themeId,
+          localOnly: true,
+          warning: error ? String(error) : ""
+        }
+      };
+    }
+
+    function confirmSaved() {
+      return call("SkyToolsStatus", {}).then(function (status) {
+        var data = normalizeData(status) || {};
+        var savedTheme = String(data.selectedThemeId || data.SelectedThemeId || "").trim();
+        if (savedTheme === themeId) {
+          state.status = status;
+          return { success: true };
+        }
+        return { success: false, error: "O backend não confirmou o tema salvo." };
+      }, function (error) {
+        return localThemeSavedResult(error);
+      });
+    }
+
+    return call("SkyToolsSaveApiSettings", { selectedThemeId: themeId, themeId: themeId }).then(function (result) {
+      if (result && result.success === false) {
+        return result;
+      }
+      return confirmSaved();
+    }).then(function (result) {
+      if (!result || result.success !== false) {
+        return result;
+      }
+      return call("SkyToolsSaveTheme", { themeId: themeId, selectedThemeId: themeId }).then(function (fallbackResult) {
+        if (fallbackResult && fallbackResult.success === false) {
+          return fallbackResult;
+        }
+        return confirmSaved();
+      });
+    }).catch(function (error) {
+      return localThemeSavedResult(error);
+    });
+  }
+
+  function safeThemeFile(file) {
+    var value = String(file || "").trim();
+    if (!/^[a-z0-9][a-z0-9._-]*\.css$/i.test(value)) {
+      return "official-orange.css";
+    }
+    return value;
+  }
+
+  function themeArray(result) {
+    var data = normalizeData(result) || {};
+    var source = Array.isArray(data.themes) ? data.themes : [];
+    var themes = [];
+    var seen = {};
+
+    function add(theme) {
+      var id = String(theme && theme.id || "").trim();
+      var file = safeThemeFile(theme && theme.file || "");
+      var name = String(theme && theme.name || "").trim();
+      if (!id) {
+        id = file.replace(/\.css$/i, "");
+      }
+      if (!id || seen[id]) {
+        return;
+      }
+      seen[id] = true;
+      themes.push({ id: id, name: name || id, file: file });
+    }
+
+    for (var builtInIndex = 0; builtInIndex < BUILT_IN_THEMES.length; builtInIndex += 1) {
+      add(BUILT_IN_THEMES[builtInIndex]);
+    }
+    for (var i = 0; i < source.length; i += 1) {
+      add(source[i]);
+    }
+    return themes;
+  }
+
+  function themeById(themeId) {
+    var themes = state.themes && state.themes.length ? state.themes : themeArray(state.status);
+    var requested = String(themeId || "").trim();
+    for (var i = 0; i < themes.length; i += 1) {
+      if (String(themes[i].id) === requested) {
+        return themes[i];
+      }
+    }
+    if (!state.status && requested && requested !== DEFAULT_THEME && /^[a-z0-9][a-z0-9._-]*$/i.test(requested)) {
+      return { id: requested, name: requested, file: requested + ".css" };
+    }
+    return themes[0] || { id: DEFAULT_THEME, name: "Oficial laranja", file: "official-orange.css" };
+  }
+
+  function hasTheme(themeId) {
+    var themes = state.themes && state.themes.length ? state.themes : themeArray(state.status);
+    for (var i = 0; i < themes.length; i += 1) {
+      if (String(themes[i].id) === String(themeId || "")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function themeUrlCandidates(file) {
+    var encoded = encodeURIComponent(safeThemeFile(file));
+    var suffix = "?v=" + encodeURIComponent(SKYTOOLS_UI_VERSION);
+    return [
+      "/webkit/SkyTools/themes/" + encoded + suffix,
+      "webkit/SkyTools/themes/" + encoded + suffix,
+      "SkyTools/themes/" + encoded + suffix,
+      "themes/" + encoded + suffix
+    ];
+  }
+
+  function isThemeCss(css) {
+    var text = String(css || "");
+    return text.indexOf("--skytools-") >= 0;
+  }
+
+  function themeScopeSelector(themeId) {
+    return [
+      'html.skytools-theme-scope[data-skytools-theme="' + String(themeId || DEFAULT_THEME) + '"]',
+      'html.skytools-theme-scope[data-skytools-theme="' + String(themeId || DEFAULT_THEME) + '"] body',
+      '.skytools-panel',
+      '.skytools-fab',
+      '.skytools-game-button',
+      '.skytools-toast'
+    ].join(", ");
+  }
+
+  function scopedThemeCss(theme, declarations) {
+    return themeScopeSelector(theme.id) + " {\n" + declarations.join("\n") + "\n}";
+  }
+
+  function themeVarMapFromCss(css) {
+    var matches = String(css || "").match(/--skytools-[a-z0-9-]+\s*:\s*[^;]+;/gi) || [];
+    var vars = {};
+    for (var i = 0; i < matches.length; i += 1) {
+      var declaration = matches[i].replace(/\s*!important\s*;/i, ";").replace(/;$/, "");
+      var colon = declaration.indexOf(":");
+      if (colon <= 0) {
+        continue;
+      }
+      var name = declaration.slice(0, colon).trim();
+      var value = declaration.slice(colon + 1).trim();
+      if (name.indexOf("--skytools-") === 0 && value) {
+        vars[name] = value;
+      }
+    }
+    return vars;
+  }
+
+  function builtInThemeVarMap(themeId) {
+    var values = BUILT_IN_THEME_VARS[String(themeId || "")];
+    var vars = {};
+    if (!values) {
+      return vars;
+    }
+    Object.keys(values).forEach(function (key) {
+      vars["--skytools-" + key] = values[key];
+    });
+    return vars;
+  }
+
+  function applyThemeVars(vars) {
+    vars = vars || state.themeVars || builtInThemeVarMap(state.themeId);
+    if (!vars || !Object.keys(vars).length) {
+      return;
+    }
+    state.themeVars = vars;
+    var nodes = [document.documentElement];
+    if (document.body) {
+      nodes.push(document.body);
+    }
+    var scopedNodes = document.querySelectorAll(".skytools-panel,.skytools-fab,.skytools-game-button,.skytools-toast");
+    for (var i = 0; i < scopedNodes.length; i += 1) {
+      nodes.push(scopedNodes[i]);
+    }
+    Object.keys(vars).forEach(function (name) {
+      for (var index = 0; index < nodes.length; index += 1) {
+        if (nodes[index] && nodes[index].style && nodes[index].style.setProperty) {
+          nodes[index].style.setProperty(name, vars[name], "important");
+        }
+      }
+    });
+  }
+
+  function builtInThemeCss(theme) {
+    var values = BUILT_IN_THEME_VARS[String(theme.id || "")];
+    if (!values) {
+      return "";
+    }
+    var declarations = [];
+    Object.keys(values).forEach(function (key) {
+      declarations.push("  --skytools-" + key + ": " + values[key] + " !important;");
+    });
+    return scopedThemeCss(theme, declarations);
+  }
+
+  function normalizeThemeCss(theme, css) {
+    var matches = String(css || "").match(/--skytools-[a-z0-9-]+\s*:\s*[^;]+;/gi) || [];
+    var declarations = [];
+    var seen = {};
+    for (var i = 0; i < matches.length; i += 1) {
+      var declaration = matches[i].replace(/\s*!important\s*;/i, ";").trim();
+      var name = declaration.split(":")[0].trim().toLowerCase();
+      if (!name || seen[name]) {
+        continue;
+      }
+      seen[name] = true;
+      declarations.push("  " + declaration.replace(/;$/, " !important;"));
+    }
+    return declarations.length ? scopedThemeCss(theme, declarations) : "";
+  }
+
+  function fetchThemeCss(theme) {
+    if (typeof fetch !== "function") {
+      return Promise.reject(new Error("fetch indisponível"));
+    }
+    var urls = themeUrlCandidates(theme.file);
+    var index = 0;
+
+    function next() {
+      if (index >= urls.length) {
+        return Promise.reject(new Error("Tema não encontrado no webkit"));
+      }
+      var url = urls[index];
+      index += 1;
+      return fetch(url, { cache: "no-store" }).then(function (response) {
+        if (!response || !response.ok) {
+          throw new Error("HTTP " + (response && response.status || 0));
+        }
+        return response.text();
+      }).then(function (css) {
+        if (!isThemeCss(css)) {
+          throw new Error("CSS de tema inválido");
+        }
+        return css;
+      }).catch(function () {
+        return next();
+      });
+    }
+
+    return next();
+  }
+
+  function backendThemeCss(theme) {
+    return call("SkyToolsTheme", { id: theme.id, file: theme.file }).then(function (result) {
+      var data = normalizeData(result) || {};
+      if (result && result.success === false || !isThemeCss(data.css)) {
+        throw new Error(result && result.error || "Tema não retornou CSS válido");
+      }
+      return data.css;
+    });
+  }
+
+  function loadThemeCss(theme) {
+    var builtIn = builtInThemeCss(theme);
+    if (builtIn) {
+      return Promise.resolve(builtIn);
+    }
+    return fetchThemeCss(theme).catch(function () {
+      return backendThemeCss(theme);
+    }).then(function (css) {
+      var normalized = normalizeThemeCss(theme, css);
+      if (!normalized) {
+        throw new Error("CSS de tema sem variáveis SkyTools");
+      }
+      return normalized;
+    });
+  }
+
+  function ensureThemeStyle() {
+    var oldLink = document.getElementById("skytools-theme-link");
+    if (oldLink) {
+      oldLink.remove();
+    }
+
+    var style = document.getElementById("skytools-theme-style");
+    if (!style) {
+      style = document.createElement("style");
+      style.id = "skytools-theme-style";
+      style.type = "text/css";
+    }
+    document.head.appendChild(style);
+    return style;
+  }
+
+  function injectThemeCss(theme, css) {
+    var style = ensureThemeStyle();
+    style.dataset.themeId = theme.id || DEFAULT_THEME;
+    style.dataset.themeFile = safeThemeFile(theme.file);
+    style.textContent = String(css || "");
+    state.themeCss = String(css || "");
+    state.themeAppliedId = theme.id || DEFAULT_THEME;
+    state.themeVars = themeVarMapFromCss(css);
+    if (!Object.keys(state.themeVars).length) {
+      state.themeVars = builtInThemeVarMap(state.themeAppliedId);
+    }
+    document.documentElement.setAttribute("data-skytools-theme", theme.id || DEFAULT_THEME);
+    document.head.appendChild(style);
+    applyThemeVars(state.themeVars);
+  }
+
+  function ensureAppliedTheme() {
+    document.documentElement.classList.add("skytools-theme-scope");
+    document.documentElement.setAttribute("data-skytools-theme", state.themeId || DEFAULT_THEME);
+    applyThemeVars();
+    var style = document.getElementById("skytools-theme-style");
+    if (state.themeCss && (!style || style.textContent !== state.themeCss || style.dataset.themeId !== state.themeAppliedId)) {
+      var theme = themeById(state.themeAppliedId || state.themeId);
+      injectThemeCss(theme, state.themeCss);
+      return;
+    }
+    if (style) {
+      document.head.appendChild(style);
+    }
+  }
+
+  function fallbackToDefaultTheme() {
+    if (!state.status || state.themeId === DEFAULT_THEME) {
+      return;
+    }
+    state.themeId = DEFAULT_THEME;
+    writeStoredTheme(DEFAULT_THEME);
+    applyTheme(DEFAULT_THEME);
+    renderPanelBody();
+  }
+
+  function applyTheme(themeId) {
+    var theme = themeById(themeId || state.themeId);
+    var requestId = state.themeRequestId + 1;
+    state.themeRequestId = requestId;
+    state.themeId = theme.id || DEFAULT_THEME;
+    document.documentElement.classList.add("skytools-theme-scope");
+    document.documentElement.setAttribute("data-skytools-theme", state.themeId);
+    applyThemeVars(builtInThemeVarMap(state.themeId));
+
+    return loadThemeCss(theme).then(function (css) {
+      if (requestId !== state.themeRequestId) {
+        return { success: true };
+      }
+      injectThemeCss(theme, css);
+      ensureAppliedTheme();
+      return { success: true, data: { id: theme.id, file: theme.file } };
+    }, function (error) {
+      if (requestId === state.themeRequestId) {
+        fallbackToDefaultTheme();
+      }
+      return { success: false, error: String(error) };
+    });
+  }
+
+  function syncThemesFromStatus(result) {
+    var data = normalizeData(result) || {};
+    var backendThemeId = String(data.selectedThemeId || data.SelectedThemeId || "").trim();
+    var storedThemeId = String(readStoredTheme() || "").trim();
+    state.themes = themeArray(result);
+
+    if (backendThemeId && backendThemeId !== DEFAULT_THEME && hasTheme(backendThemeId)) {
+      state.themeId = backendThemeId;
+      writeStoredTheme(backendThemeId);
+    } else if (storedThemeId && hasTheme(storedThemeId)) {
+      state.themeId = storedThemeId;
+    } else if (backendThemeId === DEFAULT_THEME && hasTheme(backendThemeId)) {
+      state.themeId = backendThemeId;
+      writeStoredTheme(backendThemeId);
+    }
+
+    if (!hasTheme(state.themeId)) {
+      state.themeId = DEFAULT_THEME;
+      writeStoredTheme(DEFAULT_THEME);
+    }
+    applyTheme(state.themeId);
   }
 
   function gameArray(result) {
@@ -789,9 +1227,37 @@
   function renderDiagnostics() {
     var result = state.lastResult || state.status;
     if (!result) {
-      return '<div class="skytools-empty">Sem diagnostico ainda.</div>';
+      return '<div class="skytools-empty">Sem dados ainda.</div>';
     }
     return '<pre class="skytools-result">' + escapeHtml(JSON.stringify(result, null, 2)) + '</pre>';
+  }
+
+  function renderThemeOptions() {
+    var themes = themeArray(state.status);
+    state.themes = themes;
+    var rows = [];
+    for (var i = 0; i < themes.length; i += 1) {
+      var theme = themes[i];
+      rows.push(
+        '<option value="' + escapeHtml(theme.id) + '"' + (String(theme.id) === String(state.themeId) ? " selected" : "") + '>' +
+        escapeHtml(theme.name || theme.id) +
+        '</option>'
+      );
+    }
+    return rows.join("");
+  }
+
+  function renderSettings() {
+    return [
+      '<div class="skytools-form">',
+      '  <div class="skytools-field"><label>Tema</label><select class="skytools-input" data-field="themeSelect">' + renderThemeOptions() + '</select></div>',
+      '</div>',
+      '<div class="skytools-grid skytools-tight-grid">',
+      actionCard("integration-skytools", "plug", "Ativar SkyTools", "Instalar integração Steam", false),
+      actionCard("integration-steamtools", "plug", "Ativar SteamTools", "Alternativa compatível", false),
+      '</div>',
+      renderDiagnostics()
+    ].join("");
   }
 
   function tabMarkup(tab) {
@@ -821,14 +1287,10 @@
       ].join("");
     }
 
-    if (tab === "diagnostico") {
+    if (tab === "configuracoes") {
       return [
-        '<div class="skytools-section-head"><strong>Diagnóstico</strong><button data-action="status" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
-        '<div class="skytools-grid skytools-tight-grid">',
-        actionCard("integration-skytools", "plug", "Ativar SkyTools", "Instalar integração Steam", false),
-        actionCard("integration-steamtools", "plug", "Ativar SteamTools", "Alternativa compatível", false),
-        '</div>',
-        renderDiagnostics()
+        '<div class="skytools-section-head"><strong>Configurações</strong><button data-action="status" type="button">' + icon("refresh") + '<span>Atualizar</span></button></div>',
+        renderSettings()
       ].join("");
     }
 
@@ -865,7 +1327,7 @@
       '    <button type="button" data-tab="correcoes">Correções</button>',
       '    <button type="button" data-tab="apis">APIs</button>',
       '    <button type="button" data-tab="backup">Backup</button>',
-      '    <button type="button" data-tab="diagnostico">Diagnóstico</button>',
+      '    <button type="button" data-tab="configuracoes">Configurações</button>',
       '  </div>',
       '  <div class="skytools-panel-body"></div>',
       '  <div class="skytools-activity">',
@@ -1033,6 +1495,7 @@
   function loadStatus(render) {
     return call("SkyToolsStatus", {}).then(function (result) {
       state.status = result;
+      syncThemesFromStatus(result);
       if (render !== false) {
         renderPanelBody();
       }
@@ -1361,8 +1824,6 @@
           var data = normalizeData(result) || {};
           if (data.action === "copy" && data.url) {
             copyText(data.url);
-          } else if (data.url && data.message && data.message.indexOf("iniciada") < 0) {
-            openExternal(data.url);
           }
         });
       }
@@ -1371,10 +1832,28 @@
       if (action === "backup-restore") restoreBackup();
       if (action === "integration-skytools") runAction("Ativando SkyTools", "SkyToolsIntegration", { target: "SkyTools" }, function (result) { state.status = result; });
       if (action === "integration-steamtools") runAction("Ativando SteamTools", "SkyToolsIntegration", { target: "SteamTools" }, function (result) { state.status = result; });
-      if (action === "status") runAction("Coletando diagnostico", "SkyToolsStatus", {}, function (result) { state.status = result; });
+      if (action === "status") runAction("Coletando configurações", "SkyToolsStatus", {}, function (result) { state.status = result; syncThemesFromStatus(result); });
     });
 
     panel.addEventListener("change", function (event) {
+      if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "themeSelect") {
+        state.themeId = event.target.value || DEFAULT_THEME;
+        writeStoredTheme(state.themeId);
+        var selectedTheme = themeById(state.themeId);
+        applyTheme(state.themeId).then(function (result) {
+          if (result && result.success === false) {
+            setActivity("error", "Tema não aplicado", result.error || "Voltando ao tema oficial.");
+            return;
+          }
+          saveThemePreference(selectedTheme.id).then(function (saveResult) {
+            if (saveResult && saveResult.success === false) {
+              setActivity("error", "Tema aplicado", "Não foi possível salvar para a próxima inicialização.");
+              return;
+            }
+            setActivity("success", "Tema aplicado", selectedTheme.name || "Tema selecionado.");
+          });
+        });
+      }
       var actionNode = findActionButton(event.target);
       if (actionNode && actionNode.getAttribute("data-action") === "backup-file") {
         parseBackupFile(actionNode.files && actionNode.files[0]);
@@ -1525,6 +2004,7 @@
   }
 
   function tick() {
+    ensureAppliedTheme();
     removeLegacyWebkitButton();
     ensureFloatingMenu();
     ensureGameButton();
@@ -1540,12 +2020,18 @@
   function boot() {
     log("SkyTools browser script loaded: " + location.href);
     state.lastUrl = location.href;
+    applyTheme(state.themeId);
+    loadStatus(false);
     tick();
     window.setInterval(function () {
       if (location.href !== state.lastUrl) {
         state.lastUrl = location.href;
         removeGameButton();
-        window.setTimeout(tick, 350);
+        ensureAppliedTheme();
+        window.setTimeout(function () {
+          ensureAppliedTheme();
+          tick();
+        }, 350);
       } else {
         tick();
       }
@@ -1553,7 +2039,10 @@
 
     var observer = new MutationObserver(function () {
       window.clearTimeout(observer._skytoolsTimer);
-      observer._skytoolsTimer = window.setTimeout(tick, 350);
+      observer._skytoolsTimer = window.setTimeout(function () {
+        ensureAppliedTheme();
+        tick();
+      }, 350);
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
