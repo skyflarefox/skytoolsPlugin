@@ -18,7 +18,7 @@ local BROWSER_JS = "public/skytools.js"
 local BROWSER_CSS = "public/skytools.css"
 local BROWSER_JS_WEBKIT = "webkit/SkyTools/skytools.js"
 local BROWSER_CSS_WEBKIT = "webkit/SkyTools/skytools.css"
-local DEFAULT_API_ORDER = { "skyapi", "morrenus", "sushi" }
+local DEFAULT_API_ORDER = { "skyapi", "morrenus", "ryzen" }
 
 local runtime = {
     browser_js_id = 0,
@@ -841,6 +841,66 @@ local function get_first_prop(source, keys, fallback)
         end
     end
     return fallback
+end
+
+local function canonical_api_id(id)
+    local value = trim(id):lower()
+    if value == "sushi" then
+        return "ryzen"
+    end
+    return value
+end
+
+local function native_api_ids()
+    return { skyapi = true, morrenus = true, ryzen = true }
+end
+
+local function payload_debug_keys(payload)
+    if type(payload) ~= "table" then
+        return type(payload)
+    end
+    local keys = {}
+    for key, value in pairs(payload) do
+        table.insert(keys, tostring(key) .. "=" .. type(value))
+        if #keys >= 8 then
+            break
+        end
+    end
+    table.sort(keys)
+    return table.concat(keys, ",")
+end
+
+local function canonical_preferred_api_id(id)
+    local value = trim(id)
+    if value == "" or value:lower() == "automatic" then
+        return "Automatic"
+    end
+    local lower = canonical_api_id(value)
+    if native_api_ids()[lower] == true then
+        return lower
+    end
+    return value
+end
+
+local function canonical_language_id(id)
+    local value = trim(id)
+    local lower = value:lower()
+    if value == "" or lower == "auto" or lower == "system" or lower == "windows" then
+        return "auto"
+    end
+    if lower == "pt" or lower == "pt-br" or lower == "pt_br" then
+        return "pt-BR"
+    end
+    if lower == "en" or lower:match("^en%-") ~= nil then
+        return "en"
+    end
+    if lower == "es" or lower:match("^es%-") ~= nil then
+        return "es"
+    end
+    if lower == "ru" or lower:match("^ru%-") ~= nil then
+        return "ru"
+    end
+    return nil
 end
 
 local function hidden_console_queue_dir()
@@ -2297,7 +2357,7 @@ local function status_direct(payload)
         integration = trim(get_prop(settings, "IntegrationTool", "integrationTool", "SkyTools")),
         configuredIntegration = trim(get_prop(settings, "IntegrationTool", "integrationTool", "SkyTools")),
         installedCount = cached_installed_count(),
-        preferredApi = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
+        preferredApi = canonical_preferred_api_id(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
         hasMorrenusKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")) ~= "",
         pluginId = get_prop(payload, "pluginId", "pluginId", PLUGIN_ID),
         injection = runtime.last_injection,
@@ -2306,6 +2366,7 @@ local function status_direct(payload)
         themes = list_theme_files(),
         defaultTheme = "official-orange",
         selectedThemeId = trim(get_prop(settings, "SelectedThemeId", "selectedThemeId", "ThemeId", "themeId", "")),
+        selectedLanguageId = canonical_language_id(get_prop(settings, "SelectedLanguage", "selectedLanguage", "Language", "language", "auto")) or "auto",
         fsAvailable = fs_ok and fs ~= nil,
         fsListAvailable = fs_ok and fs ~= nil and fs.list ~= nil,
         backendMode = "lua-hidden-console-worker",
@@ -2457,9 +2518,13 @@ local function apis_direct()
         if id == "morrenus" and api_key == "" then
             api_key = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", ""))
         end
+        local override_name = trim(get_prop(override, "name", "Name", ""))
+        if override_name == "" or (id == "ryzen" and override_name:lower() == "sushi") then
+            override_name = name
+        end
         return {
             id = id,
-            name = trim(get_prop(override, "name", "Name", name)),
+            name = override_name,
             editable = true,
             native = true,
             enabled = disabled[id] ~= true and get_prop(override, "enabled", "Enabled", true) ~= false,
@@ -2474,20 +2539,20 @@ local function apis_direct()
     end
 
     return {
-        preferred = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
+        preferred = canonical_preferred_api_id(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic")),
         morrenusApiKey = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", "")),
         apiOrder = clean_api_order(api_order, custom, nil),
         builtIn = {
             native_api("skyapi", "SkyAPI", false, "https://raw.githubusercontent.com/skyflarefox/Skyapi/main/<appid>.zip"),
             native_api("morrenus", "Morrenus", true, "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>"),
-            native_api("sushi", "Sushi", false, "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/main/<appid>.zip")
+            native_api("ryzen", "RyzenAPI", false, "https://raw.githubusercontent.com/MalucoPlayGamer/RyzenAPI/main/<appid>.zip")
         },
         custom = custom
     }
 end
 
 function clean_api_order(order, custom, include_id)
-    local allowed = { skyapi = true, morrenus = true, sushi = true }
+    local allowed = native_api_ids()
     for _, item in ipairs(custom or {}) do
         if type(item) == "table" then
             local id = trim(get_prop(item, "id", "Id", ""))
@@ -2504,7 +2569,10 @@ function clean_api_order(order, custom, include_id)
     local seen = {}
     local function add(id)
         id = trim(id)
-        local key = id:lower()
+        local key = canonical_api_id(id)
+        if key ~= id:lower() then
+            id = key
+        end
         if id ~= "" and allowed[key] == true and seen[key] ~= true then
             seen[key] = true
             table.insert(clean, id)
@@ -2577,12 +2645,13 @@ local function remove_game_direct(payload)
 end
 
 local function save_api_direct(payload)
+    payload = normalize_payload(payload)
     local settings = load_settings()
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
     if type(custom) ~= "table" or not is_array(custom) then
         custom = {}
     end
-    local native_ids = { skyapi = true, morrenus = true, sushi = true }
+    local native_ids = native_api_ids()
 
     local api = {
         id = trim(get_prop(payload, "id", "Id", "")),
@@ -2595,10 +2664,10 @@ local function save_api_direct(payload)
         unavailableCode = tonumber(get_prop(payload, "unavailableCode", "UnavailableCode", 404)) or 404,
         enabled = get_prop(payload, "enabled", "Enabled", true) ~= false
     }
-    local lower_id = api.id:lower()
+    local lower_id = canonical_api_id(api.id)
 
     if api.name == "" then
-        return { success = false, error = "Informe um nome para a API." }
+        return { success = false, error = "Informe um nome para a API. Payload recebido: " .. payload_debug_keys(payload) }
     end
     if api.urlTemplate == "" or api.urlTemplate:find("<appid>", 1, true) == nil then
         return { success = false, error = "A URL da API precisa conter <appid>." }
@@ -2609,6 +2678,10 @@ local function save_api_direct(payload)
     end
 
     if native_ids[lower_id] == true then
+        api.id = lower_id
+        if lower_id == "ryzen" and api.name:lower() == "sushi" then
+            api.name = "RyzenAPI"
+        end
         local native_overrides = get_prop(settings, "NativeManifestApis", "nativeManifestApis", {})
         local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
         if type(native_overrides) ~= "table" then
@@ -2619,6 +2692,8 @@ local function save_api_direct(payload)
         end
 
         native_overrides[lower_id] = api
+        native_overrides.sushi = nil
+        native_overrides.Sushi = nil
         settings.NativeManifestApis = native_overrides
         if lower_id == "morrenus" then
             settings.MorrenusApiKey = api.apiKey
@@ -2626,7 +2701,8 @@ local function save_api_direct(payload)
 
         local kept_disabled = {}
         for _, id in ipairs(disabled_api_ids) do
-            if tostring(id):lower() ~= lower_id then
+            local disabled_id = tostring(id):lower()
+            if disabled_id ~= lower_id and disabled_id ~= "sushi" then
                 table.insert(kept_disabled, id)
             end
         end
@@ -2635,14 +2711,17 @@ local function save_api_direct(payload)
         end
         settings.DisabledApiIds = kept_disabled
         settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), custom, lower_id)
-        write_json(settings_path(), settings)
+        if not write_json(settings_path(), settings) then
+            return { success = false, error = "Não foi possível gravar settings.json." }
+        end
         cache_clear()
         return api
     end
 
     local replaced = false
     for index, item in ipairs(custom) do
-        if type(item) == "table" and trim(get_prop(item, "id", "Id", "")) == api.id then
+        if type(item) == "table" and trim(get_prop(item, "id", "Id", "")):lower() == api.id:lower() then
+            api.id = trim(get_prop(item, "id", "Id", api.id))
             custom[index] = api
             replaced = true
         end
@@ -2653,7 +2732,9 @@ local function save_api_direct(payload)
 
     settings.CustomManifestApis = custom
     settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), custom, api.id)
-    write_json(settings_path(), settings)
+    if not write_json(settings_path(), settings) then
+        return { success = false, error = "Não foi possível gravar settings.json." }
+    end
     cache_clear()
     return api
 end
@@ -2665,12 +2746,13 @@ local function save_api_settings_direct(payload)
     local morrenus_key = trim(get_prop(payload, "morrenusApiKey", "MorrenusApiKey", ""))
     local api_order = get_first_prop(payload, { "apiOrder", "ApiOrder", "order", "Order", "apiOrderText", "ApiOrderText", "orderText" }, nil)
     local selected_theme = trim(get_first_prop(payload, { "selectedThemeId", "SelectedThemeId", "themeId", "ThemeId", "theme", "Theme" }, ""))
+    local selected_language = trim(get_first_prop(payload, { "selectedLanguage", "SelectedLanguage", "language", "Language", "languageId", "LanguageId" }, ""))
     local changed_without_api_order = false
     if api_order == nil and type(payload) == "table" and is_array(payload) then
         api_order = payload
     end
     if preferred ~= "" then
-        settings.PreferredDownloadApi = preferred
+        settings.PreferredDownloadApi = canonical_preferred_api_id(preferred)
         changed_without_api_order = true
     end
     if morrenus_key ~= "" then
@@ -2682,6 +2764,14 @@ local function save_api_settings_direct(payload)
             return { success = false, error = "Tema inválido." }
         end
         settings.SelectedThemeId = selected_theme
+        changed_without_api_order = true
+    end
+    if selected_language ~= "" then
+        local language_id = canonical_language_id(selected_language)
+        if language_id == nil then
+            return { success = false, error = "Idioma inválido." }
+        end
+        settings.SelectedLanguage = language_id
         changed_without_api_order = true
     end
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
@@ -2708,18 +2798,26 @@ local function save_api_settings_direct(payload)
     if selected_theme ~= "" and trim(get_prop(saved_settings, "SelectedThemeId", "selectedThemeId", "")) ~= selected_theme then
         return { success = false, error = "O tema não foi persistido em settings.json." }
     end
+    if selected_language ~= "" and (canonical_language_id(get_prop(saved_settings, "SelectedLanguage", "selectedLanguage", "auto")) or "auto") ~= (canonical_language_id(selected_language) or "") then
+        return { success = false, error = "O idioma não foi persistido em settings.json." }
+    end
     cache_clear()
     return apis_direct()
 end
 
 local function delete_api_direct(payload)
-    local id = trim(get_prop(payload, "id", "Id", ""))
+    payload = normalize_payload(payload)
+    local id = trim(get_prop(payload, "id", "Id", "query", "name", "Name", ""))
     local settings = load_settings()
-    local lower_id = id:lower()
-    if lower_id == "morrenus" or lower_id == "sushi" or lower_id == "skyapi" then
+    local lower_id = canonical_api_id(id)
+    if lower_id == "morrenus" or lower_id == "ryzen" or lower_id == "skyapi" then
         local disabled_api_ids = get_prop(settings, "DisabledApiIds", "disabledApiIds", {})
+        local native_overrides = get_prop(settings, "NativeManifestApis", "nativeManifestApis", {})
         if type(disabled_api_ids) ~= "table" then
             disabled_api_ids = {}
+        end
+        if type(native_overrides) ~= "table" then
+            native_overrides = {}
         end
         local exists = false
         for _, item in ipairs(disabled_api_ids) do
@@ -2730,10 +2828,16 @@ local function delete_api_direct(payload)
         if not exists then
             table.insert(disabled_api_ids, lower_id)
         end
+        native_overrides.sushi = nil
+        native_overrides.Sushi = nil
+        settings.NativeManifestApis = native_overrides
         settings.DisabledApiIds = disabled_api_ids
-        write_json(settings_path(), settings)
+        settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), get_prop(settings, "CustomManifestApis", "customManifestApis", {}), nil)
+        if not write_json(settings_path(), settings) then
+            return { success = false, error = "Não foi possível gravar settings.json." }
+        end
         cache_clear()
-        return { id = id, disabled = true }
+        return { id = lower_id, disabled = true }
     end
 
     local custom = get_prop(settings, "CustomManifestApis", "customManifestApis", {})
@@ -2741,7 +2845,7 @@ local function delete_api_direct(payload)
     local removed_name = ""
     if type(custom) == "table" and is_array(custom) then
         for _, item in ipairs(custom) do
-            if type(item) ~= "table" or trim(get_prop(item, "id", "Id", "")) ~= id then
+            if type(item) ~= "table" or trim(get_prop(item, "id", "Id", "")):lower() ~= id:lower() then
                 table.insert(kept, item)
             else
                 removed_name = trim(get_prop(item, "name", "Name", ""))
@@ -2751,10 +2855,13 @@ local function delete_api_direct(payload)
     settings.CustomManifestApis = kept
     settings.ApiOrder = clean_api_order(get_prop(settings, "ApiOrder", "apiOrder", DEFAULT_API_ORDER), kept, nil)
     local preferred = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic"))
+    preferred = canonical_preferred_api_id(preferred)
     if preferred:lower() == id:lower() or (removed_name ~= "" and preferred:lower() == removed_name:lower()) then
         settings.PreferredDownloadApi = "Automatic"
     end
-    write_json(settings_path(), settings)
+    if not write_json(settings_path(), settings) then
+        return { success = false, error = "Não foi possível gravar settings.json." }
+    end
     cache_clear()
     return { id = id, removed = true }
 end
@@ -2866,10 +2973,7 @@ function run_wscript_installer(payload)
     local result_path = job_result_path("add-" .. tostring(appid))
     delete_file(result_path)
 
-    local preferred = trim(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic"))
-    if preferred == "" then
-        preferred = "Automatic"
-    end
+    local preferred = canonical_preferred_api_id(get_prop(settings, "PreferredDownloadApi", "preferredDownloadApi", "Automatic"))
     local morrenus_key = trim(get_prop(settings, "MorrenusApiKey", "morrenusApiKey", ""))
     local morrenus_arg = morrenus_key
     if morrenus_arg == "" then
@@ -3547,7 +3651,20 @@ function SkyToolsApis()
     return worker_call("apis", {}, 30)
 end
 
-function SkyToolsSaveApi(payload)
+function SkyToolsSaveApi(payload, name, url_template, api_key, enabled, use_proxy, proxy_url_template, success_code, unavailable_code)
+    if name ~= nil or url_template ~= nil then
+        payload = {
+            id = payload,
+            name = name,
+            urlTemplate = url_template,
+            apiKey = api_key,
+            enabled = enabled,
+            useProxy = use_proxy,
+            proxyUrlTemplate = proxy_url_template,
+            successCode = success_code,
+            unavailableCode = unavailable_code
+        }
+    end
     return worker_call("save-api", payload or {}, 30)
 end
 
@@ -3556,6 +3673,9 @@ function SkyToolsSaveApiSettings(payload)
 end
 
 function SkyToolsDeleteApi(payload)
+    if type(payload) == "string" then
+        payload = { id = payload }
+    end
     return worker_call("delete-api", payload or {}, 30)
 end
 
@@ -3665,8 +3785,8 @@ function skytools_remove_game(params, name)
 end
 _G["skytools_remove_game"] = skytools_remove_game
 
-function skytools_save_api(api)
-    return SkyToolsSaveApi(api or {})
+function skytools_save_api(api, name, url_template, api_key, enabled, use_proxy, proxy_url_template, success_code, unavailable_code)
+    return SkyToolsSaveApi(api or {}, name, url_template, api_key, enabled, use_proxy, proxy_url_template, success_code, unavailable_code)
 end
 _G["skytools_save_api"] = skytools_save_api
 
@@ -3679,7 +3799,7 @@ function skytools_delete_api(params)
     if type(params) == "table" then
         return SkyToolsDeleteApi(params)
     end
-    return SkyToolsDeleteApi({ id = params })
+    return SkyToolsDeleteApi(params)
 end
 _G["skytools_delete_api"] = skytools_delete_api
 

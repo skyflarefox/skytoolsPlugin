@@ -3,7 +3,7 @@
   "name": "skytools-plugin",
   "common_name": "SkyTools Plugin",
   "description": "SkyTools Plugin!",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "backendType": "lua",
   "useBackend": true,
   "backend": "backend",

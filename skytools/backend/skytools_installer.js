@@ -18,6 +18,14 @@
   var resultPath = arg(7);
   if (morrenusKey === "-") morrenusKey = "";
 
+  function canonicalSourceId(id) {
+    var value = String(id || "");
+    if (value.toLowerCase() === "sushi") return "ryzen";
+    return value;
+  }
+
+  if (preferred.toLowerCase() === "sushi") preferred = "ryzen";
+
   function combine(a, b) {
     if (!a) return b;
     return /[\\\/]$/.test(a) ? a + b : a + "\\" + b;
@@ -382,19 +390,20 @@
     var sources = [];
     var skyapi = nativeSource(settings, "skyapi", "SkyAPI", "https://raw.githubusercontent.com/skyflarefox/Skyapi/main/<appid>.zip", "");
     var morrenus = nativeSource(settings, "morrenus", "Morrenus", "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>", morrenusKey);
-    var sushi = nativeSource(settings, "sushi", "Sushi", "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/main/<appid>.zip", "");
+    var ryzen = nativeSource(settings, "ryzen", "RyzenAPI", "https://raw.githubusercontent.com/MalucoPlayGamer/RyzenAPI/main/<appid>.zip", "");
     if (skyapi) sources.push(skyapi);
     if (morrenus) sources.push(morrenus);
-    if (sushi) sources.push(sushi);
+    if (ryzen) sources.push(ryzen);
     return sources;
   }
 
   function orderSources(sources, settings) {
-    var apiOrder = settings && settings.ApiOrder ? settings.ApiOrder : ["skyapi", "morrenus", "sushi"];
-    if (Object.prototype.toString.call(apiOrder) !== "[object Array]") apiOrder = ["skyapi", "morrenus", "sushi"];
+    var apiOrder = settings && settings.ApiOrder ? settings.ApiOrder : ["skyapi", "morrenus", "ryzen"];
+    if (Object.prototype.toString.call(apiOrder) !== "[object Array]") apiOrder = ["skyapi", "morrenus", "ryzen"];
     var ranked = {};
     for (var r = 0; r < apiOrder.length; r += 1) {
-      ranked[String(apiOrder[r]).toLowerCase()] = r;
+      var id = canonicalSourceId(apiOrder[r]).toLowerCase();
+      ranked[id] = r;
     }
     sources.sort(function (left, right) {
       var leftRank = ranked[String(left.id).toLowerCase()];

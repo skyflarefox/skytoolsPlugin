@@ -634,6 +634,41 @@
   padding: 7px 10px;
 }
 
+.skytools-file-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.22);
+  border-radius: 6px;
+  color: var(--skytools-text);
+  background: var(--skytools-surface-deep);
+  cursor: pointer;
+}
+
+.skytools-file-picker span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.skytools-file-picker small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--skytools-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-file-picker input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 select.skytools-input {
   cursor: pointer;
 }

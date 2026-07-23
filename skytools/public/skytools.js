@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var SKYTOOLS_UI_VERSION = "2026-07-20-theme-local-fallback-1";
+  var SKYTOOLS_UI_VERSION = "2026-07-23-i18n-live-chrome-1";
 
   if (window.__skytoolsPluginLoaded && window.__skytoolsPluginVersion === SKYTOOLS_UI_VERSION) {
     return;
@@ -21,7 +21,513 @@
   var API_ORDER_STORAGE_KEY = "SkyTools.ApiOrder";
   var THEME_STORAGE_KEY = "SkyTools.Theme";
   var THEME_STORAGE_KEYS = [THEME_STORAGE_KEY, "SkyTools.SelectedThemeId", "SkyTools.SelectedTheme"];
+  var LANGUAGE_STORAGE_KEY = "SkyTools.Language";
   var DEFAULT_THEME = "official-orange";
+  var DEFAULT_LANGUAGE = "auto";
+  var SUPPORTED_LANGUAGES = [
+    { id: "auto", label: "Automático do Windows" },
+    { id: "en", label: "English" },
+    { id: "pt-BR", label: "Português Brasileiro" },
+    { id: "es", label: "Español" },
+    { id: "ru", label: "Русский" }
+  ];
+  var SKYTOOLS_TRANSLATIONS = {
+    "pt-BR": {
+      "Home": "Início",
+      "Fixes": "Correções",
+      "Settings": "Configurações",
+      " Steam integrated": "Steam integrado",
+      "Steam integrated": "Steam integrado",
+      "Library": "Biblioteca",
+      "Default API": "API padrão",
+      "Active": "Ativa",
+      "Enabled": "Ativa",
+      "Generic": "Genérica",
+      "Generica": "Genérica",
+      "Online": "Online",
+      "Choose file": "Escolher arquivo",
+      "No file selected": "Nenhum arquivo escolhido"
+    },
+    en: {
+      "A ação falhou.": "The action failed.",
+      "Ação concluída.": "Action completed.",
+      "Abra uma página de jogo para adicionar.": "Open a game page to add it.",
+      "A ação atual terminar.": "current action to finish.",
+      "A aplicação da correção não respondeu a tempo.": "Applying the fix timed out.",
+      "A URL da API precisa conter <appid>.": "The API URL must contain <appid>.",
+      "Adicionar": "Add",
+      "Adicionar API": "Add API",
+      "Adicionar jogo": "Add game",
+      "Adicionar via SkyTools": "Add with SkyTools",
+      "Adicionando este jogo via SkyTools": "Adding this game with SkyTools",
+      "Adicionando jogo": "Adding game",
+      "Adicionando...": "Adding...",
+      "Aguardando uma ação.": "Waiting for an action.",
+      "Aguarde a ação atual terminar.": "Wait for the current action to finish.",
+      "Aguarde a adição terminar.": "Wait for the add action to finish.",
+      "Aplicando Sky": "Applying Sky",
+      "Aplicar na pasta do jogo": "Apply to game folder",
+      "APIs": "APIs",
+      "APIs de download": "Download APIs",
+      "API key": "API key",
+      "API padrão": "Built-in API",
+      "API personalizada": "Custom API",
+      "API personalizada {count}": "Custom API {count}",
+      "API sem nome": "Unnamed API",
+      "App atual": "Current app",
+      "AppID inválido.": "Invalid AppID.",
+      "Arquivo de backup": "Backup file",
+      "Arrastar para ordenar": "Drag to reorder",
+      "Arraste para definir a ordem de tentativa.": "Drag to set the retry order.",
+      "Automático do Windows": "Windows automatic",
+      "Ativa": "Enabled",
+      "Ativar SkyTools": "Enable SkyTools",
+      "Ativar SteamTools": "Enable SteamTools",
+      "Ativando SkyTools": "Enabling SkyTools",
+      "Ativando SteamTools": "Enabling SteamTools",
+      "Atualizar": "Refresh",
+      "Backup": "Backup",
+      "Biblioteca": "Library",
+      "Biblioteca carregada": "Library loaded",
+      "Baixando e instalando manifests": "Downloading and installing manifests",
+      "Buscar correções": "Search fixes",
+      "Buscar jogo instalado": "Search installed game",
+      "Buscar na biblioteca": "Search library",
+      "Buscar por jogo instalado": "Search by installed game",
+      "Buscando correções": "Searching fixes",
+      "Buscando correções Sky": "Searching Sky fixes",
+      "Cache da Steam limpo e Steam reiniciada.": "Steam cache cleared and Steam restarted.",
+      "Carregando APIs...": "Loading APIs...",
+      "Carregando APIs": "Loading APIs",
+      "Carregando biblioteca": "Loading library",
+      "Carregando jogos adicionados.": "Loading added games.",
+      "Carregando jogos instalados": "Loading installed games",
+      "Carregando jogos instalados...": "Loading installed games...",
+      "Carregando status": "Loading status",
+      "Carregue um arquivo de backup primeiro.": "Load a backup file first.",
+      "Carregue um backup": "Load a backup",
+      "Configurações": "Settings",
+      "Coletando configurações": "Collecting settings",
+      "Concluído": "Done",
+      "Correção Sky Aplicada.": "Sky fix applied.",
+      "Correções": "Fixes",
+      "Correções para jogo": "Game fixes",
+      "Desativada": "Disabled",
+      "Detectando": "Detecting",
+      "Disponível em páginas de jogo": "Available on game pages",
+      "Digite nome ou AppID": "Type name or AppID",
+      "Editar API": "Edit API",
+      "Editar API": "Edit API",
+      "Encapsular URL.": "Wrap URL.",
+      "Executando correção externa...": "Running external fix...",
+      "Executando em segundo plano.": "Running in the background.",
+      "Executando em segundo plano...": "Running in the background...",
+      "Excluir API": "Delete API",
+      "Exportando backup": "Exporting backup",
+      "Exportar": "Export",
+      "Exportar backup": "Export backup",
+      "Falha": "Failed",
+      "Fechar": "Close",
+      "Fonte": "Source",
+      "Genérica": "Generic",
+      "Generic": "Generic",
+      "HTTP indisponível": "HTTP unavailable",
+      "HTTP sucesso": "HTTP success",
+      "Idioma": "Language",
+      "Idioma aplicado": "Language applied",
+      "Idioma inválido.": "Invalid language.",
+      "Informe um nome para a API.": "Enter an API name.",
+      "Início": "Home",
+      "Instalar integração Steam": "Install Steam integration",
+      "Instalar manifests na Steam": "Install manifests in Steam",
+      "Integração": "Integration",
+      "Integracao": "Integration",
+      "Jogos instalados": "Installed games",
+      "Jogos na biblioteca": "Games in library",
+      "Jogo atual": "Current game",
+      "Link copiado.": "Link copied.",
+      "Link indisponível.": "Link unavailable.",
+      "Nome": "Name",
+      "Nenhum": "None",
+      "Nenhum backup carregado.": "No backup loaded.",
+      "Nenhum arquivo escolhido": "No file selected",
+      "Nenhum jogo aberto": "No game open",
+      "Nenhum jogo carregado ainda.": "No games loaded yet.",
+      "Nenhum jogo encontrado com esse filtro.": "No games found with this filter.",
+      "Nenhum jogo instalado encontrado nas bibliotecas Steam.": "No installed games found in Steam libraries.",
+      "Nenhuma API configurada.": "No APIs configured.",
+      "Nenhuma correção Sky carregada.": "No Sky fixes loaded.",
+      "Não foi possível gravar settings.json.": "Could not write settings.json.",
+      "Não foi possível salvar o idioma.": "Could not save the language.",
+      "Não foi possível salvar para a próxima inicialização.": "Could not save for the next startup.",
+      "O idioma não foi persistido em settings.json.": "The language was not persisted in settings.json.",
+      "Ordem salva": "Order saved",
+      "Oceano ciano": "Cyan ocean",
+      "Oficial laranja": "Official orange",
+      "Online": "Online",
+      "Pacote não suportado": "Unsupported package",
+      "Preferência salva.": "Preference saved.",
+      "A prioridade das APIs foi atualizada.": "The API priority was updated.",
+      "Grafite lima": "Lime graphite",
+      "Processando": "Processing",
+      "Pronto": "Ready",
+      "Proxy": "Proxy",
+      "Remover correção e verificar integridade": "Remove fix and verify integrity",
+      "Remover da Steam": "Remove from Steam",
+      "Remover este jogo da biblioteca SkyTools": "Remove this game from the SkyTools library",
+      "Remover via SkyTools": "Remove with SkyTools",
+      "Removendo API": "Removing API",
+      "Removendo correção": "Removing fix",
+      "Removendo jogo": "Removing game",
+      "Restaurando backup": "Restoring backup",
+      "Restaurar ausentes": "Restore missing",
+      "Rubi brasa": "Ruby ember",
+      "Resultados": "Results",
+      "Salvar API": "Save API",
+      "Salvar biblioteca em JSON": "Save library as JSON",
+      "Salvando API": "Saving API",
+      "Salvando idioma": "Saving language",
+      "Salvando ordem": "Saving order",
+      "Salvando preferências": "Saving preferences",
+      "Sem dados ainda.": "No data yet.",
+      "Steam integrado": "Steam integrated",
+      "SkyTools carregado.": "SkyTools loaded.",
+      "Sincronizando com o backend...": "Syncing with the backend...",
+      "Steam não encontrada.": "Steam not found.",
+      "Tema": "Theme",
+      "Tema aplicado": "Theme applied",
+      "Tema não aplicado": "Theme not applied",
+      "Tema selecionado.": "Selected theme.",
+      "URL da API": "API URL",
+      "URL do proxy": "Proxy URL",
+      "URL não configurada": "URL not configured",
+      "Escolher arquivo": "Choose file",
+      "Home": "Home",
+      "Fixes": "Fixes",
+      "Settings": "Settings",
+      "Biblioteca": "Library",
+      "Steam integrated": "Steam integrated",
+      "Use <appid> na URL. Use <apikey> quando a fonte exigir chave.": "Use <appid> in the URL. Use <apikey> when the source requires a key.",
+      "Usar nas instalações.": "Use during installs.",
+      "Voltando ao tema oficial.": "Returning to the official theme."
+    },
+    es: {
+      "A ação falhou.": "La acción falló.",
+      "Ação concluída.": "Acción completada.",
+      "Abra uma página de jogo para adicionar.": "Abre una página de juego para añadirlo.",
+      "A aplicação da correção não respondeu a tempo.": "La aplicación de la corrección agotó el tiempo.",
+      "A URL da API precisa conter <appid>.": "La URL de la API debe contener <appid>.",
+      "Adicionar": "Añadir",
+      "Adicionar API": "Añadir API",
+      "Adicionar jogo": "Añadir juego",
+      "Adicionar via SkyTools": "Añadir con SkyTools",
+      "Adicionando este jogo via SkyTools": "Añadiendo este juego con SkyTools",
+      "Adicionando jogo": "Añadiendo juego",
+      "Adicionando...": "Añadiendo...",
+      "Aguardando uma ação.": "Esperando una acción.",
+      "Aguarde a ação atual terminar.": "Espera a que termine la acción actual.",
+      "Aguarde a adição terminar.": "Espera a que termine la adición.",
+      "Aplicando Sky": "Aplicando Sky",
+      "Aplicar na pasta do jogo": "Aplicar en la carpeta del juego",
+      "APIs de download": "APIs de descarga",
+      "API padrão": "API predeterminada",
+      "API personalizada": "API personalizada",
+      "API personalizada {count}": "API personalizada {count}",
+      "API sem nome": "API sin nombre",
+      "App atual": "App actual",
+      "AppID inválido.": "AppID inválido.",
+      "Arquivo de backup": "Archivo de backup",
+      "Arrastar para ordenar": "Arrastrar para ordenar",
+      "Arraste para definir a ordem de tentativa.": "Arrastra para definir el orden de intento.",
+      "Automático do Windows": "Automático de Windows",
+      "Ativa": "Activa",
+      "Ativar SkyTools": "Activar SkyTools",
+      "Ativar SteamTools": "Activar SteamTools",
+      "Ativando SkyTools": "Activando SkyTools",
+      "Ativando SteamTools": "Activando SteamTools",
+      "Atualizar": "Actualizar",
+      "Backup": "Backup",
+      "Biblioteca": "Biblioteca",
+      "Biblioteca carregada": "Biblioteca cargada",
+      "Baixando e instalando manifests": "Descargando e instalando manifests",
+      "Buscar correções": "Buscar correcciones",
+      "Buscar jogo instalado": "Buscar juego instalado",
+      "Buscar na biblioteca": "Buscar en la biblioteca",
+      "Buscar por jogo instalado": "Buscar por juego instalado",
+      "Buscando correções": "Buscando correcciones",
+      "Buscando correções Sky": "Buscando correcciones Sky",
+      "Cache da Steam limpo e Steam reiniciada.": "Caché de Steam limpiada y Steam reiniciado.",
+      "Carregando APIs...": "Cargando APIs...",
+      "Carregando APIs": "Cargando APIs",
+      "Carregando biblioteca": "Cargando biblioteca",
+      "Carregando jogos adicionados.": "Cargando juegos añadidos.",
+      "Carregando jogos instalados": "Cargando juegos instalados",
+      "Carregando jogos instalados...": "Cargando juegos instalados...",
+      "Carregando status": "Cargando estado",
+      "Carregue um arquivo de backup primeiro.": "Carga primero un archivo de backup.",
+      "Carregue um backup": "Carga un backup",
+      "Configurações": "Configuración",
+      "Coletando configurações": "Recopilando configuración",
+      "Concluído": "Completado",
+      "Correção Sky Aplicada.": "Corrección Sky aplicada.",
+      "Correções": "Correcciones",
+      "Correções para jogo": "Correcciones del juego",
+      "Desativada": "Desactivada",
+      "Detectando": "Detectando",
+      "Disponível em páginas de jogo": "Disponible en páginas de juegos",
+      "Digite nome ou AppID": "Escribe nombre o AppID",
+      "Editar API": "Editar API",
+      "Encapsular URL.": "Encapsular URL.",
+      "Executando correção externa...": "Ejecutando corrección externa...",
+      "Executando em segundo plano.": "Ejecutando en segundo plano.",
+      "Executando em segundo plano...": "Ejecutando en segundo plano...",
+      "Excluir API": "Eliminar API",
+      "Exportando backup": "Exportando backup",
+      "Exportar": "Exportar",
+      "Exportar backup": "Exportar backup",
+      "Falha": "Error",
+      "Fechar": "Cerrar",
+      "Fonte": "Fuente",
+      "Genérica": "Genérica",
+      "Generic": "Genérica",
+      "HTTP indisponível": "HTTP no disponible",
+      "HTTP sucesso": "HTTP éxito",
+      "Idioma": "Idioma",
+      "Idioma aplicado": "Idioma aplicado",
+      "Idioma inválido.": "Idioma inválido.",
+      "Informe um nome para a API.": "Introduce un nombre para la API.",
+      "Início": "Inicio",
+      "Instalar integração Steam": "Instalar integración Steam",
+      "Instalar manifests na Steam": "Instalar manifests en Steam",
+      "Integração": "Integración",
+      "Integracao": "Integración",
+      "Jogos instalados": "Juegos instalados",
+      "Jogos na biblioteca": "Juegos en la biblioteca",
+      "Jogo atual": "Juego actual",
+      "Link copiado.": "Enlace copiado.",
+      "Link indisponível.": "Enlace no disponible.",
+      "Nome": "Nombre",
+      "Nenhum": "Ninguno",
+      "Nenhum backup carregado.": "Ningún backup cargado.",
+      "Nenhum arquivo escolhido": "Ningún archivo elegido",
+      "Nenhum jogo aberto": "Ningún juego abierto",
+      "Nenhum jogo carregado ainda.": "No hay juegos cargados todavía.",
+      "Nenhum jogo encontrado com esse filtro.": "No se encontraron juegos con este filtro.",
+      "Nenhum jogo instalado encontrado nas bibliotecas Steam.": "No se encontraron juegos instalados en las bibliotecas de Steam.",
+      "Nenhuma API configurada.": "Ninguna API configurada.",
+      "Nenhuma correção Sky carregada.": "Ninguna corrección Sky cargada.",
+      "Não foi possível gravar settings.json.": "No se pudo escribir settings.json.",
+      "Não foi possível salvar o idioma.": "No se pudo guardar el idioma.",
+      "Não foi possível salvar para a próxima inicialização.": "No se pudo guardar para el próximo inicio.",
+      "O idioma não foi persistido em settings.json.": "El idioma no se guardó en settings.json.",
+      "Ordem salva": "Orden guardado",
+      "Oceano ciano": "Océano cian",
+      "Oficial laranja": "Naranja oficial",
+      "Online": "Online",
+      "Pacote não suportado": "Paquete no compatible",
+      "Preferência salva.": "Preferencia guardada.",
+      "A prioridade das APIs foi atualizada.": "La prioridad de las APIs se actualizó.",
+      "Grafite lima": "Grafito lima",
+      "Processando": "Procesando",
+      "Pronto": "Listo",
+      "Proxy": "Proxy",
+      "Remover correção e verificar integridade": "Eliminar corrección y verificar integridad",
+      "Remover da Steam": "Eliminar de Steam",
+      "Remover este jogo da biblioteca SkyTools": "Eliminar este juego de la biblioteca SkyTools",
+      "Remover via SkyTools": "Eliminar con SkyTools",
+      "Removendo API": "Eliminando API",
+      "Removendo correção": "Eliminando corrección",
+      "Removendo jogo": "Eliminando juego",
+      "Restaurando backup": "Restaurando backup",
+      "Restaurar ausentes": "Restaurar ausentes",
+      "Rubi brasa": "Rubí brasa",
+      "Resultados": "Resultados",
+      "Salvar API": "Guardar API",
+      "Salvar biblioteca em JSON": "Guardar biblioteca en JSON",
+      "Salvando API": "Guardando API",
+      "Salvando idioma": "Guardando idioma",
+      "Salvando ordem": "Guardando orden",
+      "Salvando preferências": "Guardando preferencias",
+      "Sem dados ainda.": "Sin datos todavía.",
+      "Steam integrado": "Steam integrado",
+      "SkyTools carregado.": "SkyTools cargado.",
+      "Sincronizando com o backend...": "Sincronizando con el backend...",
+      "Steam não encontrada.": "Steam no encontrada.",
+      "Tema": "Tema",
+      "Tema aplicado": "Tema aplicado",
+      "Tema não aplicado": "Tema no aplicado",
+      "Tema selecionado.": "Tema seleccionado.",
+      "URL da API": "URL de la API",
+      "URL do proxy": "URL del proxy",
+      "URL não configurada": "URL no configurada",
+      "Escolher arquivo": "Elegir archivo",
+      "Home": "Inicio",
+      "Fixes": "Correcciones",
+      "Settings": "Configuración",
+      "Steam integrated": "Steam integrado",
+      "Use <appid> na URL. Use <apikey> quando a fonte exigir chave.": "Usa <appid> en la URL. Usa <apikey> cuando la fuente requiera una clave.",
+      "Usar nas instalações.": "Usar en las instalaciones.",
+      "Voltando ao tema oficial.": "Volviendo al tema oficial."
+    },
+    ru: {
+      "A ação falhou.": "Действие не выполнено.",
+      "Ação concluída.": "Действие завершено.",
+      "Abra uma página de jogo para adicionar.": "Откройте страницу игры, чтобы добавить ее.",
+      "A aplicação da correção não respondeu a tempo.": "Применение исправления не ответило вовремя.",
+      "A URL da API precisa conter <appid>.": "URL API должен содержать <appid>.",
+      "Adicionar": "Добавить",
+      "Adicionar API": "Добавить API",
+      "Adicionar jogo": "Добавить игру",
+      "Adicionar via SkyTools": "Добавить через SkyTools",
+      "Adicionando este jogo via SkyTools": "Добавление этой игры через SkyTools",
+      "Adicionando jogo": "Добавление игры",
+      "Adicionando...": "Добавление...",
+      "Aguardando uma ação.": "Ожидание действия.",
+      "Aguarde a ação atual terminar.": "Дождитесь завершения текущего действия.",
+      "Aguarde a adição terminar.": "Дождитесь завершения добавления.",
+      "Aplicando Sky": "Применение Sky",
+      "Aplicar na pasta do jogo": "Применить в папке игры",
+      "APIs de download": "API загрузки",
+      "API padrão": "Встроенный API",
+      "API personalizada": "Пользовательский API",
+      "API personalizada {count}": "Пользовательский API {count}",
+      "API sem nome": "API без имени",
+      "App atual": "Текущее приложение",
+      "AppID inválido.": "Недействительный AppID.",
+      "Arquivo de backup": "Файл резервной копии",
+      "Arrastar para ordenar": "Перетащите для сортировки",
+      "Arraste para definir a ordem de tentativa.": "Перетащите, чтобы задать порядок попыток.",
+      "Automático do Windows": "Автоматически из Windows",
+      "Ativa": "Включена",
+      "Ativar SkyTools": "Включить SkyTools",
+      "Ativar SteamTools": "Включить SteamTools",
+      "Ativando SkyTools": "Включение SkyTools",
+      "Ativando SteamTools": "Включение SteamTools",
+      "Atualizar": "Обновить",
+      "Backup": "Резервная копия",
+      "Biblioteca": "Библиотека",
+      "Biblioteca carregada": "Библиотека загружена",
+      "Baixando e instalando manifests": "Загрузка и установка манифестов",
+      "Buscar correções": "Искать исправления",
+      "Buscar jogo instalado": "Искать установленную игру",
+      "Buscar na biblioteca": "Поиск в библиотеке",
+      "Buscar por jogo instalado": "Поиск по установленной игре",
+      "Buscando correções": "Поиск исправлений",
+      "Buscando correções Sky": "Поиск исправлений Sky",
+      "Cache da Steam limpo e Steam reiniciada.": "Кэш Steam очищен, Steam перезапущен.",
+      "Carregando APIs...": "Загрузка API...",
+      "Carregando APIs": "Загрузка API",
+      "Carregando biblioteca": "Загрузка библиотеки",
+      "Carregando jogos adicionados.": "Загрузка добавленных игр.",
+      "Carregando jogos instalados": "Загрузка установленных игр",
+      "Carregando jogos instalados...": "Загрузка установленных игр...",
+      "Carregando status": "Загрузка статуса",
+      "Carregue um arquivo de backup primeiro.": "Сначала загрузите файл резервной копии.",
+      "Carregue um backup": "Загрузите резервную копию",
+      "Configurações": "Настройки",
+      "Coletando configurações": "Сбор настроек",
+      "Concluído": "Готово",
+      "Correção Sky Aplicada.": "Исправление Sky применено.",
+      "Correções": "Исправления",
+      "Correções para jogo": "Исправления для игры",
+      "Desativada": "Отключена",
+      "Detectando": "Определение",
+      "Disponível em páginas de jogo": "Доступно на страницах игр",
+      "Digite nome ou AppID": "Введите имя или AppID",
+      "Editar API": "Редактировать API",
+      "Encapsular URL.": "Обернуть URL.",
+      "Executando correção externa...": "Запуск внешнего исправления...",
+      "Executando em segundo plano.": "Выполняется в фоне.",
+      "Executando em segundo plano...": "Выполняется в фоне...",
+      "Excluir API": "Удалить API",
+      "Exportando backup": "Экспорт резервной копии",
+      "Exportar": "Экспорт",
+      "Exportar backup": "Экспорт резервной копии",
+      "Falha": "Ошибка",
+      "Fechar": "Закрыть",
+      "Fonte": "Источник",
+      "Genérica": "Общее",
+      "Generic": "Общее",
+      "HTTP indisponível": "HTTP недоступен",
+      "HTTP sucesso": "HTTP успех",
+      "Idioma": "Язык",
+      "Idioma aplicado": "Язык применен",
+      "Idioma inválido.": "Недействительный язык.",
+      "Informe um nome para a API.": "Введите имя API.",
+      "Início": "Главная",
+      "Instalar integração Steam": "Установить интеграцию Steam",
+      "Instalar manifests na Steam": "Установить манифесты в Steam",
+      "Integração": "Интеграция",
+      "Integracao": "Интеграция",
+      "Jogos instalados": "Установленные игры",
+      "Jogos na biblioteca": "Игры в библиотеке",
+      "Jogo atual": "Текущая игра",
+      "Link copiado.": "Ссылка скопирована.",
+      "Link indisponível.": "Ссылка недоступна.",
+      "Nome": "Имя",
+      "Nenhum": "Нет",
+      "Nenhum backup carregado.": "Резервная копия не загружена.",
+      "Nenhum arquivo escolhido": "Файл не выбран",
+      "Nenhum jogo aberto": "Игра не открыта",
+      "Nenhum jogo carregado ainda.": "Игры еще не загружены.",
+      "Nenhum jogo encontrado com esse filtro.": "Игры по этому фильтру не найдены.",
+      "Nenhum jogo instalado encontrado nas bibliotecas Steam.": "Установленные игры в библиотеках Steam не найдены.",
+      "Nenhuma API configurada.": "API не настроены.",
+      "Nenhuma correção Sky carregada.": "Исправления Sky не загружены.",
+      "Não foi possível gravar settings.json.": "Не удалось записать settings.json.",
+      "Não foi possível salvar o idioma.": "Не удалось сохранить язык.",
+      "Não foi possível salvar para a próxima inicialização.": "Не удалось сохранить для следующего запуска.",
+      "O idioma não foi persistido em settings.json.": "Язык не был сохранен в settings.json.",
+      "Ordem salva": "Порядок сохранен",
+      "Oceano ciano": "Циановый океан",
+      "Oficial laranja": "Официальный оранжевый",
+      "Online": "Онлайн",
+      "Pacote não suportado": "Пакет не поддерживается",
+      "Preferência salva.": "Настройка сохранена.",
+      "A prioridade das APIs foi atualizada.": "Приоритет API обновлен.",
+      "Grafite lima": "Графитовый лайм",
+      "Processando": "Обработка",
+      "Pronto": "Готово",
+      "Proxy": "Прокси",
+      "Remover correção e verificar integridade": "Удалить исправление и проверить целостность",
+      "Remover da Steam": "Удалить из Steam",
+      "Remover este jogo da biblioteca SkyTools": "Удалить эту игру из библиотеки SkyTools",
+      "Remover via SkyTools": "Удалить через SkyTools",
+      "Removendo API": "Удаление API",
+      "Removendo correção": "Удаление исправления",
+      "Removendo jogo": "Удаление игры",
+      "Restaurando backup": "Восстановление резервной копии",
+      "Restaurar ausentes": "Восстановить отсутствующие",
+      "Rubi brasa": "Рубиновый жар",
+      "Resultados": "Результаты",
+      "Salvar API": "Сохранить API",
+      "Salvar biblioteca em JSON": "Сохранить библиотеку в JSON",
+      "Salvando API": "Сохранение API",
+      "Salvando idioma": "Сохранение языка",
+      "Salvando ordem": "Сохранение порядка",
+      "Salvando preferências": "Сохранение настроек",
+      "Sem dados ainda.": "Данных пока нет.",
+      "Steam integrado": "Steam интегрирован",
+      "SkyTools carregado.": "SkyTools загружен.",
+      "Sincronizando com o backend...": "Синхронизация с backend...",
+      "Steam não encontrada.": "Steam не найден.",
+      "Tema": "Тема",
+      "Tema aplicado": "Тема применена",
+      "Tema não aplicado": "Тема не применена",
+      "Tema selecionado.": "Выбранная тема.",
+      "URL da API": "URL API",
+      "URL do proxy": "URL прокси",
+      "URL não configurada": "URL не настроен",
+      "Escolher arquivo": "Выбрать файл",
+      "Home": "Главная",
+      "Fixes": "Исправления",
+      "Settings": "Настройки",
+      "Steam integrated": "Steam интегрирован",
+      "Use <appid> na URL. Use <apikey> quando a fonte exigir chave.": "Используйте <appid> в URL. Используйте <apikey>, если источник требует ключ.",
+      "Usar nas instalações.": "Использовать при установке.",
+      "Voltando ao tema oficial.": "Возврат к официальной теме."
+    }
+  };
   var BUILT_IN_THEMES = [
     { id: DEFAULT_THEME, name: "Oficial laranja", file: "official-orange.css" },
     { id: "ocean-cyan", name: "Oceano ciano", file: "ocean-cyan.css" },
@@ -60,6 +566,7 @@
     apis: null,
     themes: BUILT_IN_THEMES.slice(),
     themeId: readStoredTheme(),
+    languageMode: readStoredLanguage(),
     themeRequestId: 0,
     themeCss: "",
     themeAppliedId: "",
@@ -121,6 +628,159 @@
       .replace(/"/g, "&quot;");
   }
 
+  function normalizeLanguageId(value) {
+    value = String(value || "").trim();
+    if (!value) {
+      return DEFAULT_LANGUAGE;
+    }
+    var lower = value.toLowerCase();
+    if (lower === "pt" || lower === "pt-br" || lower === "pt_br") {
+      return "pt-BR";
+    }
+    if (lower === "en" || lower.indexOf("en-") === 0) {
+      return "en";
+    }
+    if (lower === "es" || lower.indexOf("es-") === 0) {
+      return "es";
+    }
+    if (lower === "ru" || lower.indexOf("ru-") === 0) {
+      return "ru";
+    }
+    if (lower === "auto" || lower === "system" || lower === "windows") {
+      return "auto";
+    }
+    return DEFAULT_LANGUAGE;
+  }
+
+  function systemLanguageId() {
+    var candidates = [];
+    if (navigator.languages && navigator.languages.length) {
+      candidates = Array.prototype.slice.call(navigator.languages);
+    }
+    candidates.push(navigator.language || navigator.userLanguage || "");
+    for (var i = 0; i < candidates.length; i += 1) {
+      var id = normalizeLanguageId(candidates[i]);
+      if (id !== "auto") {
+        return id;
+      }
+    }
+    return "en";
+  }
+
+  function activeLanguageId() {
+    var mode = normalizeLanguageId(state && state.languageMode || DEFAULT_LANGUAGE);
+    return mode === "auto" ? systemLanguageId() : mode;
+  }
+
+  function languageLabel(id) {
+    id = normalizeLanguageId(id);
+    for (var i = 0; i < SUPPORTED_LANGUAGES.length; i += 1) {
+      if (SUPPORTED_LANGUAGES[i].id === id) {
+        return SUPPORTED_LANGUAGES[i].label;
+      }
+    }
+    return SUPPORTED_LANGUAGES[0].label;
+  }
+
+  function t(text, vars) {
+    text = String(text == null ? "" : text);
+    var lang = activeLanguageId();
+    var value = (SKYTOOLS_TRANSLATIONS[lang] && SKYTOOLS_TRANSLATIONS[lang][text]) || text;
+    if (vars) {
+      Object.keys(vars).forEach(function (key) {
+        value = value.split("{" + key + "}").join(String(vars[key]));
+      });
+    }
+    return value;
+  }
+
+  function translateMessage(message) {
+    var text = String(message == null ? "" : message);
+    var exact = t(text);
+    if (exact !== text) {
+      return exact;
+    }
+    var lang = activeLanguageId();
+    var prefixes = [
+      ["Nenhuma API retornou um pacote válido.", {
+        en: "No API returned a valid package.",
+        es: "Ninguna API devolvió un paquete válido.",
+        ru: "Ни один API не вернул допустимый пакет."
+      }],
+      ["Não foi possível abrir o pacote zip.", {
+        en: "Could not open the zip package.",
+        es: "No se pudo abrir el paquete zip.",
+        ru: "Не удалось открыть zip-пакет."
+      }],
+      ["Já existe uma operação em andamento para este jogo.", {
+        en: "There is already an operation running for this game.",
+        es: "Ya hay una operación en curso para este juego.",
+        ru: "Для этой игры уже выполняется операция."
+      }]
+    ];
+    for (var p = 0; p < prefixes.length; p += 1) {
+      if (text.indexOf(prefixes[p][0]) === 0 && lang !== "pt-BR") {
+        return prefixes[p][1][lang] + text.slice(prefixes[p][0].length);
+      }
+    }
+    var replacements = [
+      [/^(\d+) jogos adicionados\. Integração: (.+)\.$/, "{count} games added. Integration: {integration}.", "{count} juegos añadidos. Integración: {integration}.", "{count} игр добавлено. Интеграция: {integration}."],
+      [/^Manifests: (\d+)\. DLCs: (\d+)\.$/, "Manifests: {manifests}. DLCs: {dlcs}.", "Manifests: {manifests}. DLCs: {dlcs}.", "Манифесты: {manifests}. DLC: {dlcs}."],
+      [/^Resultados para (.+)$/, "Results for {name}", "Resultados para {name}", "Результаты для {name}"],
+      [/^Mostrar mais (\d+) de (\d+)$/, "Show {count} more of {total}", "Mostrar {count} más de {total}", "Показать еще {count} из {total}"],
+      [/^(\d+) jogo\(s\) carregado\(s\)$/, "{count} game(s) loaded", "{count} juego(s) cargado(s)", "{count} игр загружено"],
+      [/^(\d+) item\(ns\) encontrados\.$/, "{count} item(s) found.", "{count} elemento(s) encontrados.", "Найдено элементов: {count}."]
+    ];
+    for (var i = 0; i < replacements.length; i += 1) {
+      var match = text.match(replacements[i][0]);
+      if (!match) {
+        continue;
+      }
+      var template = lang === "en" ? replacements[i][1] : lang === "es" ? replacements[i][2] : lang === "ru" ? replacements[i][3] : text;
+      return template
+        .replace("{count}", match[1] || "")
+        .replace("{integration}", match[2] || "")
+        .replace("{manifests}", match[1] || "")
+        .replace("{dlcs}", match[2] || "")
+        .replace("{name}", match[1] || "")
+        .replace("{total}", match[2] || "");
+    }
+    return text;
+  }
+
+  function localizeDom(root) {
+    if (!root || !document.createTreeWalker) {
+      return;
+    }
+    var walker = document.createTreeWalker(root, window.NodeFilter ? window.NodeFilter.SHOW_TEXT : 4, null);
+    var nodes = [];
+    while (walker.nextNode()) {
+      nodes.push(walker.currentNode);
+    }
+    for (var i = 0; i < nodes.length; i += 1) {
+      var raw = nodes[i].nodeValue || "";
+      var trimmed = raw.trim();
+      if (!trimmed) {
+        continue;
+      }
+      var translated = translateMessage(trimmed);
+      if (translated !== trimmed) {
+        nodes[i].nodeValue = raw.replace(trimmed, translated);
+      }
+    }
+    var attrs = ["title", "placeholder", "aria-label"];
+    var elements = root.querySelectorAll ? root.querySelectorAll("[title],[placeholder],[aria-label]") : [];
+    for (var e = 0; e < elements.length; e += 1) {
+      for (var a = 0; a < attrs.length; a += 1) {
+        var attr = attrs[a];
+        var value = elements[e].getAttribute(attr);
+        if (value) {
+          elements[e].setAttribute(attr, translateMessage(value));
+        }
+      }
+    }
+  }
+
   function log(message) {
     try {
       Millennium.callServerMethod(PLUGIN_ID, "Logger.log", { message: String(message) });
@@ -140,11 +800,94 @@
     return response || {};
   }
 
+  function shouldRetryLegacyCall(result) {
+    if (!result || result.success !== false) {
+      return false;
+    }
+    return /metodo desconhecido|m[eé]todo desconhecido|method.*not.*found|unknown method|bridge/i.test(String(result.error || ""));
+  }
+
+  function withTimeout(promise, label) {
+    var timeoutMs = 35000;
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (!settled) {
+          settled = true;
+          reject(new Error((label || "Chamada") + " demorou demais para responder."));
+        }
+      }, timeoutMs);
+      promise.then(function (value) {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(value);
+        }
+      }, function (error) {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  function wrapPayload(payload) {
+    var value = payload || {};
+    if (typeof value === "object") {
+      return { payload: JSON.stringify(value) };
+    }
+    return { payload: String(value) };
+  }
+
+  function callLegacy(method, payload) {
+    return withTimeout(Millennium.callServerMethod(PLUGIN_ID, method, wrapPayload(payload)).then(parseResponse), method);
+  }
+
   function call(method, payload) {
     if (typeof Millennium === "undefined" || typeof Millennium.callServerMethod !== "function") {
       return Promise.reject(new Error("Millennium bridge indisponível"));
     }
-    return Millennium.callServerMethod(PLUGIN_ID, method, payload || {}).then(parseResponse);
+    try {
+      return withTimeout(Millennium.callServerMethod(method, wrapPayload(payload)).then(parseResponse), method).then(function (result) {
+        if (shouldRetryLegacyCall(result)) {
+          return callLegacy(method, payload);
+        }
+        return result;
+      }, function () {
+        return callLegacy(method, payload);
+      });
+    } catch (_) {
+      return callLegacy(method, payload);
+    }
+  }
+
+  function callJson(method, payload) {
+    return call(method, payload || {});
+  }
+
+  function callArgs(method, args) {
+    args = Array.isArray(args) ? args : [];
+    if (typeof Millennium === "undefined" || typeof Millennium.callServerMethod !== "function") {
+      return Promise.reject(new Error("Millennium bridge indisponível"));
+    }
+    return call(method, { args: args });
+  }
+
+  function apiFormArgs(api) {
+    api = api || {};
+    return [
+      String(api.id || ""),
+      String(api.name || ""),
+      String(api.urlTemplate || ""),
+      String(api.apiKey || ""),
+      api.enabled !== false,
+      api.useProxy === true,
+      String(api.proxyUrlTemplate || ""),
+      Number(api.successCode) || 200,
+      Number(api.unavailableCode) || 404
+    ];
   }
 
   function appIdFromUrl() {
@@ -217,6 +960,31 @@
       }
     } catch (_) {
       // O CSS base mantém o tema oficial mesmo quando o storage da WebView falha.
+    }
+  }
+
+  function readStoredLanguage() {
+    try {
+      return normalizeLanguageId(localStorage.getItem(LANGUAGE_STORAGE_KEY) || DEFAULT_LANGUAGE);
+    } catch (_) {
+      return DEFAULT_LANGUAGE;
+    }
+  }
+
+  function writeStoredLanguage(languageId) {
+    try {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, normalizeLanguageId(languageId));
+    } catch (_) {
+      // Local storage can be unavailable in Steam WebView; backend persistence remains authoritative.
+    }
+  }
+
+  function syncLanguageFromStatus(result) {
+    var data = normalizeData(result) || {};
+    var saved = data.selectedLanguageId || data.selectedLanguage || data.language || data.Language;
+    if (saved) {
+      state.languageMode = normalizeLanguageId(saved);
+      writeStoredLanguage(state.languageMode);
     }
   }
 
@@ -632,11 +1400,19 @@
   }
 
   function apiId(api) {
-    return String((api && (api.id || api.Id)) || "");
+    return canonicalApiId((api && (api.id || api.Id)) || "");
+  }
+
+  function canonicalApiId(id) {
+    var value = String(id || "").trim();
+    if (value.toLowerCase() === "sushi") {
+      return "ryzen";
+    }
+    return value;
   }
 
   function defaultApiOrder() {
-    return ["skyapi", "morrenus", "sushi"];
+    return ["skyapi", "morrenus", "ryzen"];
   }
 
   function readStoredApiOrder() {
@@ -664,7 +1440,7 @@
     var preferredOrder = Array.isArray(order) && order.length ? order : defaultApiOrder();
     var rank = {};
     preferredOrder.forEach(function (id, index) {
-      rank[String(id).toLowerCase()] = index;
+      rank[canonicalApiId(id).toLowerCase()] = index;
     });
     list.sort(function (left, right) {
       var leftRank = rank[apiId(left).toLowerCase()];
@@ -719,7 +1495,7 @@
     var rows = panel ? panel.querySelectorAll(".skytools-api-draggable[data-api-id]") : [];
     var order = [];
     for (var i = 0; i < rows.length; i += 1) {
-      var id = rows[i].getAttribute("data-api-id") || "";
+      var id = canonicalApiId(rows[i].getAttribute("data-api-id") || "");
       if (id) {
         order.push(id);
       }
@@ -755,15 +1531,15 @@
 
   function friendlyError(result) {
     if (!result) {
-      return "A ação falhou.";
+      return t("A ação falhou.");
     }
-    return result.error || result.message || "A ação falhou.";
+    return translateMessage(result.error || result.message || "A ação falhou.");
   }
 
   function setActivity(kind, title, detail) {
     state.activityKind = kind || "idle";
-    state.activityTitle = title || "SkyTools";
-    state.activityDetail = detail || "";
+    state.activityTitle = title ? translateMessage(title) : "SkyTools";
+    state.activityDetail = detail ? translateMessage(detail) : "";
     updateActivity();
   }
 
@@ -782,8 +1558,8 @@
     toast.innerHTML =
       '<div class="skytools-toast-icon">' + icon(kind === "error" ? "error" : kind === "success" ? "check" : "status") + "</div>" +
       '<div><strong></strong><span></span></div>';
-    toast.querySelector("strong").textContent = title;
-    toast.querySelector("span").textContent = message || "";
+    toast.querySelector("strong").textContent = translateMessage(title);
+    toast.querySelector("span").textContent = translateMessage(message || "");
     document.body.appendChild(toast);
     window.setTimeout(function () {
       if (toast.parentNode) {
@@ -854,12 +1630,12 @@
     button.disabled = adding || state.busy;
     button.setAttribute("aria-busy", adding ? "true" : "false");
     if (adding) {
-      button.innerHTML = icon("spinner", "spin") + "<span>Adicionando...</span>";
-      button.title = "Adicionando este jogo via SkyTools";
+      button.innerHTML = icon("spinner", "spin") + "<span>" + escapeHtml(t("Adicionando...")) + "</span>";
+      button.title = t("Adicionando este jogo via SkyTools");
       return;
     }
-    button.innerHTML = icon(added ? "trash" : "add") + "<span>" + (added ? "Remover via SkyTools" : "Adicionar via SkyTools") + "</span>";
-    button.title = added ? "Remover este jogo da biblioteca SkyTools" : "Adicionar este jogo via SkyTools";
+    button.innerHTML = icon(added ? "trash" : "add") + "<span>" + escapeHtml(added ? t("Remover via SkyTools") : t("Adicionar via SkyTools")) + "</span>";
+    button.title = added ? t("Remover este jogo da biblioteca SkyTools") : t("Adicionar este jogo via SkyTools");
   }
 
   function refreshInstalledCache(force) {
@@ -1075,7 +1851,7 @@
       var useProxy = api.useProxy === true || api.UseProxy === true;
       var success = api.successCode || api.SuccessCode || 200;
       var unavailable = api.unavailableCode || api.UnavailableCode || 404;
-      var detail = (enabled ? "Ativa" : "Desativada") + " · " + (nativeApi ? "API padrão" : "API personalizada") + " · HTTP " + success + "/" + unavailable + (useProxy ? " · proxy" : "");
+      var detail = t(enabled ? "Ativa" : "Desativada") + " · " + t(nativeApi ? "API padrão" : "API personalizada") + " · HTTP " + success + "/" + unavailable + (useProxy ? " · proxy" : "");
       return [
         '<div class="skytools-custom-api-row skytools-api-draggable ' + (state.apiForm && state.apiForm.id === id ? "selected" : "") + '" draggable="true" data-api-id="' + escapeHtml(id) + '">',
         '  <span class="skytools-drag-handle" title="Arrastar para ordenar">' + icon("api") + '</span>',
@@ -1142,11 +1918,22 @@
     return /\.(zip|rar|7z)(?:\?|$)/i.test(String(value || ""));
   }
 
+  function translateFixText(value) {
+    var text = String(value || "");
+    if (!text) {
+      return text;
+    }
+    return text
+      .replace(/\bGen[eé]rica\b/gi, t("Genérica"))
+      .replace(/\bGeneric\b/gi, t("Generic"))
+      .replace(/\bOnline\b/gi, t("Online"));
+  }
+
   function formatFixLabel(source) {
     source = source || {};
-    if (source.displayName) return source.displayName;
+    if (source.displayName) return translateFixText(source.displayName);
     var name = source.name || source.title || source.fileName || source.provider || "Fonte";
-    var type = source.type || "";
+    var type = translateFixText(source.type || "");
     var size = source.size || "";
     var provider = source.provider || "Sky";
     var label = name;
@@ -1163,7 +1950,7 @@
     }
     return sources.map(function (source, index) {
       var title = formatFixLabel(source);
-      var detail = source.fileName || [source.provider, source.type, source.size].filter(Boolean).join(" · ");
+      var detail = source.fileName || [source.provider, translateFixText(source.type), source.size].filter(Boolean).join(" · ");
       var url = sourceUrl(source);
       var canApply = looksLikeArchive(url) || looksLikeArchive(title);
       var actionButton = canApply
@@ -1233,7 +2020,7 @@
       '</div>',
       '<div class="skytools-form">',
       '  <label>Arquivo de backup</label>',
-      '  <input class="skytools-input" type="file" accept="application/json,.json" data-action="backup-file">',
+      '  <label class="skytools-file-picker">' + icon("folder") + '<span>Escolher arquivo</span><small data-role="backup-file-name">Nenhum arquivo escolhido</small><input type="file" accept="application/json,.json" data-action="backup-file"></label>',
       '</div>',
       backup ? '<pre class="skytools-result">' + escapeHtml(JSON.stringify({ createdAt: backup.createdAt, games: games.slice(0, 20), total: games.length }, null, 2)) + '</pre>' : '<div class="skytools-empty">Nenhum backup carregado.</div>'
     ].join("");
@@ -1262,9 +2049,24 @@
     return rows.join("");
   }
 
+  function renderLanguageOptions() {
+    var rows = [];
+    var current = normalizeLanguageId(state.languageMode);
+    for (var i = 0; i < SUPPORTED_LANGUAGES.length; i += 1) {
+      var language = SUPPORTED_LANGUAGES[i];
+      rows.push(
+        '<option value="' + escapeHtml(language.id) + '"' + (language.id === current ? " selected" : "") + '>' +
+        escapeHtml(language.id === "auto" ? t(language.label) : language.label) +
+        '</option>'
+      );
+    }
+    return rows.join("");
+  }
+
   function renderSettings() {
     return [
       '<div class="skytools-form">',
+      '  <div class="skytools-field"><label>Idioma</label><select class="skytools-input" data-field="languageSelect">' + renderLanguageOptions() + '</select></div>',
       '  <div class="skytools-field"><label>Tema</label><select class="skytools-input" data-field="themeSelect">' + renderThemeOptions() + '</select></div>',
       '</div>',
       '<div class="skytools-grid skytools-tight-grid">',
@@ -1373,6 +2175,35 @@
     }
   }
 
+  function resetPanelChromeText(panel) {
+    if (!panel) {
+      return;
+    }
+    var subtitle = panel.querySelector(".skytools-brand small");
+    if (subtitle) {
+      subtitle.textContent = "Steam integrado";
+    }
+    var close = panel.querySelector(".skytools-panel-close");
+    if (close) {
+      close.setAttribute("title", "Fechar");
+    }
+    var labels = {
+      inicio: "Início",
+      biblioteca: "Biblioteca",
+      correcoes: "Correções",
+      apis: "APIs",
+      backup: "Backup",
+      configuracoes: "Configurações"
+    };
+    var buttons = panel.querySelectorAll("[data-tab]");
+    for (var i = 0; i < buttons.length; i += 1) {
+      var key = buttons[i].getAttribute("data-tab") || "";
+      if (labels[key]) {
+        buttons[i].textContent = labels[key];
+      }
+    }
+  }
+
   function updateActivity() {
     var panel = document.querySelector(".skytools-panel");
     if (!panel) {
@@ -1422,9 +2253,11 @@
     if (body) {
       body.innerHTML = tabMarkup(state.activeTab);
     }
+    resetPanelChromeText(panel);
     updateTabs();
     updateActivity();
     updateBusyState();
+    localizeDom(panel);
   }
 
   function renderResult(result, title) {
@@ -1440,7 +2273,7 @@
     var data = normalizeData(result);
     var detail = "Ação concluída.";
     if (Array.isArray(data)) {
-      detail = data.length + " item(ns) encontrados.";
+      detail = translateMessage(data.length + " item(ns) encontrados.");
     } else if (data && data.installedCount != null) {
       detail = data.installedCount + " jogos adicionados. Integração: " + (data.integration || "-") + ".";
       if (data.appNameCacheCount != null) {
@@ -1449,7 +2282,7 @@
     } else if (data && data.manifestCount != null) {
       detail = "Manifests: " + data.manifestCount + ". DLCs: " + (data.dlcCount || 0) + ".";
     } else if (data && data.message) {
-      detail = data.message;
+      detail = translateMessage(data.message);
     } else if (data && data.path) {
       detail = data.path;
     }
@@ -1535,6 +2368,7 @@
     return call("SkyToolsStatus", {}).then(function (result) {
       state.status = result;
       syncThemesFromStatus(result);
+      syncLanguageFromStatus(result);
       if (render !== false) {
         renderPanelBody();
       }
@@ -1579,8 +2413,9 @@
     var builtIn = data.builtIn || [];
     var custom = data.custom || [];
     var all = builtIn.concat(custom);
+    var wanted = canonicalApiId(id).toLowerCase();
     for (var i = 0; i < all.length; i += 1) {
-      if (String(all[i].id || all[i].Id || "") === String(id || "")) {
+      if (apiId(all[i]).toLowerCase() === wanted) {
         return all[i];
       }
     }
@@ -1793,7 +2628,29 @@
           renderPanelBody();
         }
       }
-      if (action === "api-delete") runAction("Excluindo API", "SkyToolsDeleteApi", { id: button.getAttribute("data-api-id") }, function () { state.apis = null; return call("SkyToolsApis", {}).then(function (result) { state.apis = result; }); });
+      if (action === "api-delete") {
+        if (state.busy) {
+          showToast("SkyTools", "Aguarde a ação atual terminar.", "info");
+          return;
+        }
+        setBusy("Excluindo API", "Executando em segundo plano.");
+        call("SkyToolsDeleteApi", { id: canonicalApiId(button.getAttribute("data-api-id")) }).then(function (result) {
+          clearBusy();
+          if (result && result.success === false) {
+            renderResult(result, "Excluindo API");
+            return;
+          }
+          state.apiForm = null;
+          state.apis = null;
+          return call("SkyToolsApis", {}).then(function (apis) {
+            state.apis = apis;
+            renderResult(result, "Excluindo API");
+          });
+        }, function (error) {
+          clearBusy();
+          renderResult({ success: false, error: error && error.message ? error.message : String(error) }, "Excluindo API");
+        });
+      }
       if (action === "api-new") {
         var apiData = normalizeData(state.apis) || {};
         var customCount = (apiData.custom || []).length;
@@ -1801,7 +2658,30 @@
         renderPanelBody();
       }
       if (action === "api-cancel") { state.apiForm = null; renderPanelBody(); }
-      if (action === "api-save") runAction("Salvando API", "SkyToolsSaveApi", currentApiForm(panel), function () { state.apiForm = null; state.apis = null; return call("SkyToolsApis", {}).then(function (result) { state.apis = result; }); });
+      if (action === "api-save") {
+        if (state.busy) {
+          showToast("SkyTools", "Aguarde a ação atual terminar.", "info");
+          return;
+        }
+        var apiPayload = currentApiForm(panel);
+        setBusy("Salvando API", "Executando em segundo plano.");
+        call("SkyToolsSaveApi", apiPayload).then(function (result) {
+          clearBusy();
+          if (result && result.success === false) {
+            renderResult(result, "Salvando API");
+            return;
+          }
+          state.apiForm = null;
+          state.apis = null;
+          return call("SkyToolsApis", {}).then(function (apis) {
+            state.apis = apis;
+            renderResult(result, "Salvando API");
+          });
+        }, function (error) {
+          clearBusy();
+          renderResult({ success: false, error: error && error.message ? error.message : String(error) }, "Salvando API");
+        });
+      }
       if (action === "api-save-settings") runAction("Salvando preferências", "SkyToolsSaveApiSettings", { apiOrder: state.apiOrder || [] }, function (result) { state.apis = result; });
       if (action === "fixes") loadFixSources("fixes", "Buscando correções", payload);
       if (action === "online") loadFixSources("online", "Buscando correções Sky", payload);
@@ -1815,6 +2695,7 @@
         var loadMoreList = panel.querySelector('[data-role="fix-game-list"]');
         if (loadMoreList) {
           loadMoreList.innerHTML = renderFixGamePicker();
+          localizeDom(loadMoreList);
         }
       }
       if (action === "fix-open") openExternal(button.getAttribute("data-url"));
@@ -1874,10 +2755,27 @@
       if (action === "backup-restore") restoreBackup();
       if (action === "integration-skytools") runAction("Ativando SkyTools", "SkyToolsIntegration", { target: "SkyTools" }, function (result) { state.status = result; });
       if (action === "integration-steamtools") runAction("Ativando SteamTools", "SkyToolsIntegration", { target: "SteamTools" }, function (result) { state.status = result; });
-      if (action === "status") runAction("Coletando configurações", "SkyToolsStatus", {}, function (result) { state.status = result; syncThemesFromStatus(result); });
+      if (action === "status") runAction("Coletando configurações", "SkyToolsStatus", {}, function (result) { state.status = result; syncThemesFromStatus(result); syncLanguageFromStatus(result); });
     });
 
     panel.addEventListener("change", function (event) {
+      if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "languageSelect") {
+        state.languageMode = normalizeLanguageId(event.target.value || DEFAULT_LANGUAGE);
+        writeStoredLanguage(state.languageMode);
+        updateGameButton();
+        renderPanelBody();
+        setBusy("Salvando idioma", "Executando em segundo plano.");
+        call("SkyToolsSaveApiSettings", { selectedLanguage: state.languageMode, language: state.languageMode }).then(function (result) {
+          clearBusy("Idioma aplicado", "Preferência salva.", "success");
+          if (result && result.success === false) {
+            setActivity("error", "Idioma aplicado", "Não foi possível salvar o idioma.");
+          }
+        }, function (error) {
+          clearBusy(false);
+          setActivity("error", "Idioma aplicado", error && error.message ? error.message : "Não foi possível salvar o idioma.");
+        });
+        return;
+      }
       if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "themeSelect") {
         state.themeId = event.target.value || DEFAULT_THEME;
         writeStoredTheme(state.themeId);
@@ -1898,6 +2796,10 @@
       }
       var actionNode = findActionButton(event.target);
       if (actionNode && actionNode.getAttribute("data-action") === "backup-file") {
+        var fileNameNode = panel.querySelector('[data-role="backup-file-name"]');
+        if (fileNameNode) {
+          fileNameNode.textContent = actionNode.files && actionNode.files[0] ? actionNode.files[0].name : t("Nenhum arquivo escolhido");
+        }
         parseBackupFile(actionNode.files && actionNode.files[0]);
       }
     });
@@ -1909,6 +2811,7 @@
         var fixList = panel.querySelector('[data-role="fix-game-list"]');
         if (fixList) {
           fixList.innerHTML = renderFixGamePicker();
+          localizeDom(fixList);
         }
       }
       if (event.target && event.target.getAttribute && event.target.getAttribute("data-field") === "librarySearch") {
@@ -1916,6 +2819,7 @@
         var installedList = panel.querySelector('[data-role="installed-list"]');
         if (installedList) {
           installedList.innerHTML = renderInstalledList();
+          localizeDom(installedList);
         }
       }
     });
@@ -1935,6 +2839,7 @@
       state.fixVisibleCount = oldLimit + 120;
       var oldTop = target.scrollTop;
       target.innerHTML = renderFixGamePicker();
+      localizeDom(target);
       target.scrollTop = oldTop;
     }, true);
 
@@ -2095,3 +3000,4 @@
     boot();
   }
 })();
+
