@@ -1,0 +1,1104 @@
+@font-face {
+  font-family: "SkyTools FA";
+  src: url("fontawesome/webfonts/fa-solid-900.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+}
+
+:root,
+.skytools-theme-scope {
+  --skytools-bg: #17120f;
+  --skytools-bg-elevated: rgba(28, 22, 18, 0.98);
+  --skytools-surface: rgba(255, 255, 255, 0.035);
+  --skytools-surface-strong: rgba(255, 255, 255, 0.045);
+  --skytools-surface-muted: rgba(0, 0, 0, 0.16);
+  --skytools-surface-deep: rgba(0, 0, 0, 0.28);
+  --skytools-text: #ffffff;
+  --skytools-text-soft: #f6ddc5;
+  --skytools-muted: #d1a57d;
+  --skytools-muted-strong: #d7b28d;
+  --skytools-brand-muted: #d9ad83;
+  --skytools-accent: #e88914;
+  --skytools-accent-strong: #c24e12;
+  --skytools-accent-alt: #f59e0b;
+  --skytools-accent-rgb: 255, 166, 77;
+  --skytools-accent-strong-rgb: 194, 78, 18;
+  --skytools-accent-text: #ffd29a;
+  --skytools-button-start: #bf4b10;
+  --skytools-button-end: #e88914;
+  --skytools-button-remove-start: #9f3b0e;
+  --skytools-button-remove-end: #d86510;
+  --skytools-success: #34d399;
+  --skytools-success-soft: #7ee0a3;
+  --skytools-danger: #fb7185;
+  --skytools-danger-soft: #ff8a8a;
+  --skytools-danger-text: #ffb4a8;
+  --skytools-warning: #f2c94c;
+}
+
+.skytools-fab-shell,
+.skytools-fab,
+.skytools-fab-toggle,
+.skytools-game-button,
+.skytools-panel,
+.skytools-panel button {
+  box-sizing: border-box;
+  font-family: Motiva Sans, Arial, Helvetica, sans-serif;
+}
+
+.skytools-fa {
+  display: inline-block;
+  font-family: "SkyTools FA";
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  text-rendering: auto;
+}
+
+.skytools-fa.spin {
+  animation: skytools-spin 1s linear infinite;
+}
+
+.skytools-fab-shell {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2147483600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  transition: right 160ms ease, bottom 160ms ease;
+}
+
+.skytools-fab {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 132px;
+  height: 46px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.62);
+  border-radius: 7px;
+  color: var(--skytools-text);
+  background: linear-gradient(135deg, var(--skytools-accent-strong), var(--skytools-accent));
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), 0 0 20px rgba(var(--skytools-accent-rgb, 232, 137, 20), 0.22);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  overflow: hidden;
+  transition: opacity 160ms ease, transform 160ms ease, min-width 160ms ease, width 160ms ease, padding 160ms ease, border-width 160ms ease;
+}
+
+.skytools-fab-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.55);
+  border-radius: 7px;
+  color: var(--skytools-text);
+  background: var(--skytools-bg-elevated);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.36), 0 0 16px rgba(var(--skytools-accent-rgb, 232, 137, 20), 0.16);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.skytools-fab-collapsed .skytools-fab {
+  min-width: 0;
+  width: 0;
+  padding: 0;
+  gap: 0;
+  border-width: 0;
+  opacity: 0;
+  transform: translateX(12px);
+  pointer-events: none;
+}
+
+.skytools-fab-collapsed {
+  right: 0;
+  gap: 0;
+}
+
+.skytools-fab-collapsed .skytools-fab-toggle {
+  width: 24px;
+  height: 52px;
+  border-right-width: 0;
+  border-radius: 7px 0 0 7px;
+  color: rgba(255, 255, 255, 0.66);
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: none;
+  opacity: 0.36;
+}
+
+.skytools-fab-collapsed .skytools-fab-toggle:hover,
+.skytools-fab-collapsed .skytools-fab-toggle:focus-visible {
+  opacity: 0.86;
+  background: rgba(var(--skytools-accent-rgb), 0.20);
+}
+
+.skytools-fab-collapsed .skytools-fab-logo,
+.skytools-fab-collapsed .skytools-fab span {
+  width: 0;
+  opacity: 0;
+}
+
+html.skytools-fab-is-collapsed .skytools-game-button {
+  display: none !important;
+}
+
+.skytools-fab-logo,
+.skytools-logo {
+  display: inline-block;
+  background: url("skytools_logo.png") center / contain no-repeat;
+  flex: 0 0 auto;
+}
+
+.skytools-fab-logo {
+  width: 24px;
+  height: 24px;
+}
+
+.skytools-logo {
+  width: 34px;
+  height: 34px;
+}
+
+.skytools-game-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 34px;
+  margin: 8px 0 0 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.66);
+  border-radius: 3px;
+  color: var(--skytools-text);
+  background: linear-gradient(135deg, var(--skytools-button-start), var(--skytools-accent));
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.skytools-game-button-remove {
+  border-color: rgba(255, 190, 102, 0.7);
+  background: linear-gradient(135deg, var(--skytools-button-remove-start), var(--skytools-button-remove-end));
+}
+
+.skytools-game-button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.skytools-game-button-loading {
+  border-color: rgba(var(--skytools-accent-rgb), 0.72);
+  background: linear-gradient(135deg, rgba(var(--skytools-accent-strong-rgb), 0.82), rgba(var(--skytools-accent-rgb), 0.58));
+}
+
+.skytools-game-button-loading span {
+  min-width: 88px;
+}
+
+.skytools-fab:hover,
+.skytools-fab-toggle:hover,
+.skytools-game-button:hover,
+.skytools-panel button:hover {
+  filter: brightness(1.08);
+}
+
+.skytools-game-button:disabled:hover,
+.skytools-panel button:disabled:hover {
+  filter: none;
+}
+
+.skytools-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 84px;
+  z-index: 2147483603;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  width: min(380px, calc(100vw - 48px));
+  padding: 13px 14px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.32);
+  border-radius: 7px;
+  color: var(--skytools-text-soft);
+  background: var(--skytools-bg-elevated);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.46);
+  font: 13px/1.35 Motiva Sans, Arial, Helvetica, sans-serif;
+}
+
+.skytools-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.13);
+}
+
+.skytools-toast strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--skytools-text);
+}
+
+.skytools-toast-success .skytools-toast-icon {
+  color: #6ee7a8;
+  background: rgba(50, 180, 112, 0.14);
+}
+
+.skytools-toast-error .skytools-toast-icon {
+  color: var(--skytools-danger-soft);
+  background: rgba(255, 80, 80, 0.14);
+}
+
+.skytools-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 84px;
+  z-index: 2147483602;
+  width: min(620px, calc(100vw - 48px));
+  max-height: min(720px, calc(100vh - 112px));
+  overflow: hidden;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.32);
+  border-radius: 8px;
+  color: var(--skytools-text-soft);
+  background: var(--skytools-bg);
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.58);
+  font: 13px/1.4 Motiva Sans, Arial, Helvetica, sans-serif;
+}
+
+.skytools-panel-shell {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  max-height: inherit;
+}
+
+.skytools-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 16px;
+  border-bottom: 1px solid rgba(var(--skytools-accent-rgb), 0.16);
+  background: linear-gradient(90deg, rgba(var(--skytools-accent-strong-rgb, 194, 78, 18), 0.34), rgba(var(--skytools-accent-rgb, 232, 137, 20), 0.09));
+}
+
+.skytools-brand {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 11px;
+}
+
+.skytools-brand strong {
+  display: block;
+  color: var(--skytools-text);
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.skytools-brand small {
+  display: block;
+  margin-top: 2px;
+  color: var(--skytools-brand-muted);
+  font-size: 12px;
+}
+
+.skytools-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.skytools-status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+  background: var(--skytools-brand-muted);
+  box-shadow: 0 0 12px rgba(217, 173, 131, 0.5);
+}
+
+.skytools-dot-busy {
+  background: var(--skytools-warning);
+}
+
+.skytools-dot-success {
+  background: var(--skytools-success);
+}
+
+.skytools-dot-error {
+  background: var(--skytools-danger);
+}
+
+.skytools-panel-close {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.36);
+  border-radius: 6px;
+  color: #ffe1bf;
+  background: rgba(var(--skytools-accent-rgb), 0.1);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.skytools-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.skytools-tabs button {
+  flex: 1 1 78px;
+  min-width: 0;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--skytools-muted-strong);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-tabs button.active {
+  color: var(--skytools-text);
+  border-color: rgba(var(--skytools-accent-rgb), 0.38);
+  background: rgba(var(--skytools-accent-rgb), 0.12);
+}
+
+.skytools-panel-body {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.skytools-current {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.17);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.skytools-current-art {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 7px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.12);
+  font-size: 22px;
+}
+
+.skytools-current span,
+.skytools-current small,
+.skytools-row-main span,
+.skytools-metric span {
+  color: var(--skytools-muted);
+}
+
+.skytools-current strong {
+  display: block;
+  overflow: hidden;
+  color: var(--skytools-text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-current small {
+  display: block;
+  margin-top: 2px;
+}
+
+.skytools-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.skytools-metric {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.skytools-metric span,
+.skytools-metric strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-metric strong {
+  margin-top: 3px;
+  color: var(--skytools-text);
+}
+
+.skytools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.skytools-action-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 13px;
+  align-items: center;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.24);
+  border-radius: 7px;
+  color: var(--skytools-text);
+  background: var(--skytools-surface-strong);
+  cursor: pointer;
+  text-align: left;
+}
+
+.skytools-action-card:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.skytools-action-loading {
+  border-color: rgba(var(--skytools-accent-rgb), 0.42);
+}
+
+.skytools-primary-action {
+  background: linear-gradient(135deg, rgba(var(--skytools-accent-strong-rgb, 194, 78, 18), 0.42), rgba(var(--skytools-accent-rgb, 232, 137, 20), 0.16));
+}
+
+.skytools-action-icon,
+.skytools-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 7px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.11);
+  font-size: 17px;
+}
+
+.skytools-action-copy {
+  min-width: 0;
+  padding-left: 1px;
+}
+
+.skytools-action-copy strong,
+.skytools-action-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skytools-action-copy strong {
+  color: var(--skytools-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.skytools-action-copy small {
+  margin-top: 3px;
+  color: var(--skytools-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.skytools-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skytools-section-head strong {
+  color: var(--skytools-text);
+  font-size: 14px;
+}
+
+.skytools-section-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.28);
+  border-radius: 6px;
+  color: var(--skytools-text);
+  background: rgba(var(--skytools-accent-rgb), 0.1);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.skytools-list {
+  display: grid;
+  gap: 8px;
+}
+
+.skytools-scroll-list {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(382px, calc(100vh - 336px));
+  min-height: 132px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  contain: content;
+  scrollbar-gutter: stable;
+}
+
+.skytools-fix-game-list {
+  align-content: start;
+}
+
+.skytools-load-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.22);
+  border-radius: 7px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.08);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.skytools-api-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.skytools-api-card,
+.skytools-api-editor {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  background: var(--skytools-surface-muted);
+}
+
+.skytools-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skytools-card-head strong,
+.skytools-card-head span {
+  display: block;
+}
+
+.skytools-card-head strong {
+  color: var(--skytools-text);
+  font-size: 14px;
+}
+
+.skytools-card-head span {
+  margin-top: 2px;
+  color: var(--skytools-muted);
+  font-size: 12px;
+}
+
+.skytools-card-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.28);
+  border-radius: 6px;
+  color: var(--skytools-text);
+  background: rgba(var(--skytools-accent-rgb), 0.1);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.skytools-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skytools-field {
+  display: grid;
+  flex: 1 1 150px;
+  min-width: 0;
+  gap: 6px;
+}
+
+.skytools-grow {
+  flex-basis: 220px;
+}
+
+.skytools-field label {
+  color: var(--skytools-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.skytools-form {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  background: var(--skytools-surface-muted);
+}
+
+.skytools-form label {
+  color: var(--skytools-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.skytools-input {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.22);
+  border-radius: 6px;
+  color: var(--skytools-text);
+  background: var(--skytools-surface-deep);
+  font: 13px/1.3 Motiva Sans, Arial, Helvetica, sans-serif;
+}
+
+.skytools-input[type="file"] {
+  padding: 7px 10px;
+}
+
+.skytools-file-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.22);
+  border-radius: 6px;
+  color: var(--skytools-text);
+  background: var(--skytools-surface-deep);
+  cursor: pointer;
+}
+
+.skytools-file-picker span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.skytools-file-picker small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--skytools-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-file-picker input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+select.skytools-input {
+  cursor: pointer;
+}
+
+select.skytools-input option {
+  color: var(--skytools-text);
+  background: var(--skytools-bg);
+}
+
+.skytools-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--skytools-text-soft);
+}
+
+.skytools-check input {
+  accent-color: var(--skytools-accent);
+}
+
+.skytools-setting-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  flex: 0 1 172px;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  background: var(--skytools-surface);
+}
+
+.skytools-setting-toggle strong,
+.skytools-setting-toggle small {
+  display: block;
+}
+
+.skytools-setting-toggle strong {
+  color: var(--skytools-text);
+  font-size: 12px;
+}
+
+.skytools-setting-toggle small {
+  margin-top: 2px;
+  color: var(--skytools-muted);
+  font-size: 11px;
+}
+
+.skytools-setting-toggle input {
+  accent-color: var(--skytools-accent);
+}
+
+.skytools-form button,
+.skytools-button-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.28);
+  border-radius: 6px;
+  color: var(--skytools-text);
+  background: rgba(var(--skytools-accent-rgb), 0.1);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.skytools-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skytools-button-row button {
+  flex: 1 1 120px;
+}
+
+.skytools-native-api-list,
+.skytools-custom-api-list {
+  display: grid;
+  gap: 8px;
+}
+
+.skytools-api-source,
+.skytools-custom-api-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  background: var(--skytools-surface);
+}
+
+.skytools-custom-api-row.selected {
+  border-color: rgba(var(--skytools-accent-rgb), 0.42);
+  background: rgba(var(--skytools-accent-rgb), 0.08);
+}
+
+.skytools-api-draggable {
+  user-select: none;
+}
+
+.skytools-api-draggable.dragging {
+  opacity: 0.58;
+}
+
+.skytools-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.12);
+  cursor: grab;
+  touch-action: none;
+  font-size: 16px;
+}
+
+.skytools-drag-handle:active {
+  cursor: grabbing;
+}
+
+.skytools-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skytools-list-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-auto-columns: 34px;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  background: var(--skytools-surface);
+}
+
+.skytools-row-main {
+  min-width: 0;
+}
+
+.skytools-row-main strong,
+.skytools-row-main span,
+.skytools-row-main small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-row-main strong {
+  color: var(--skytools-text);
+}
+
+.skytools-row-main small {
+  margin-top: 2px;
+  color: var(--skytools-muted);
+  font-size: 11px;
+}
+
+.skytools-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.24);
+  border-radius: 999px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.08);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.skytools-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.24);
+  border-radius: 7px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.08);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.skytools-row-action:hover {
+  color: var(--skytools-text);
+  background: rgba(var(--skytools-accent-strong-rgb, 194, 78, 18), 0.32);
+}
+
+.skytools-danger-action {
+  color: var(--skytools-danger-text);
+  border-color: rgba(255, 106, 86, 0.22);
+}
+
+.skytools-tight-grid .skytools-action-card {
+  min-height: 64px;
+}
+
+.skytools-empty {
+  padding: 18px;
+  border: 1px dashed rgba(var(--skytools-accent-rgb), 0.24);
+  border-radius: 7px;
+  color: var(--skytools-muted);
+  text-align: center;
+}
+
+.skytools-result {
+  max-height: 300px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  border-radius: 7px;
+  color: var(--skytools-text-soft);
+  background: rgba(0, 0, 0, 0.24);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.skytools-activity {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(var(--skytools-accent-rgb), 0.14);
+  background: rgba(0, 0, 0, 0.22);
+  position: relative;
+}
+
+.skytools-activity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  color: var(--skytools-accent-text);
+  background: rgba(var(--skytools-accent-rgb), 0.11);
+}
+
+.skytools-activity-copy {
+  min-width: 0;
+}
+
+.skytools-activity-copy strong,
+.skytools-activity-copy span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skytools-activity-copy strong {
+  color: var(--skytools-text);
+}
+
+.skytools-activity-copy span {
+  color: var(--skytools-muted);
+}
+
+.skytools-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: none;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(var(--skytools-accent-rgb), 0.08);
+}
+
+.skytools-progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--skytools-accent-strong), var(--skytools-accent-alt));
+  animation: skytools-progress 1.15s ease-in-out infinite;
+}
+
+.skytools-activity-busy .skytools-progress {
+  display: block;
+}
+
+.skytools-activity-success .skytools-activity-icon {
+  color: var(--skytools-success-soft);
+  background: rgba(50, 180, 112, 0.12);
+}
+
+.skytools-activity-error .skytools-activity-icon {
+  color: var(--skytools-danger-soft);
+  background: rgba(255, 80, 80, 0.12);
+}
+
+@keyframes skytools-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes skytools-progress {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(260%); }
+}
+
+@media (max-width: 720px) {
+  .skytools-panel {
+    right: 14px;
+    bottom: 72px;
+    width: calc(100vw - 28px);
+  }
+
+  .skytools-fab-shell {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .skytools-fab-collapsed {
+    right: 0;
+  }
+
+  .skytools-tabs {
+    gap: 5px;
+  }
+
+  .skytools-grid,
+  .skytools-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .skytools-api-source,
+  .skytools-custom-api-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .skytools-api-source .skytools-pill,
+  .skytools-custom-api-row .skytools-row-actions {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
