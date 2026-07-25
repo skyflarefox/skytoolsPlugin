@@ -1,0 +1,366 @@
+﻿{
+    "success":  true,
+    "data":  [
+                 {
+                     "appId":  227300,
+                     "fileName":  "227300.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\227300.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  109,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  228380,
+                     "fileName":  "228380.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\228380.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  22,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  412020,
+                     "fileName":  "412020.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\412020.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  9,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  448280,
+                     "fileName":  "448280.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\448280.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  486780,
+                     "fileName":  "486780.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\486780.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  488310,
+                     "fileName":  "488310.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\488310.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  582660,
+                     "fileName":  "582660.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\582660.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  9,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  629730,
+                     "fileName":  "629730.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\629730.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  668580,
+                     "fileName":  "668580.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\668580.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  678950,
+                     "fileName":  "678950.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\678950.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  37,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  701160,
+                     "fileName":  "701160.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\701160.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  11,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  731490,
+                     "fileName":  "731490.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\731490.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  2,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  804490,
+                     "fileName":  "804490.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\804490.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  990380,
+                     "fileName":  "990380.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\990380.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1091500,
+                     "fileName":  "1091500.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1091500.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  48,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1094390,
+                     "fileName":  "1094390.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1094390.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1167630,
+                     "fileName":  "1167630.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1167630.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  6,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1551360,
+                     "fileName":  "1551360.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1551360.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  57,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1599660,
+                     "fileName":  "1599660.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1599660.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  24,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1623730,
+                     "fileName":  "1623730.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1623730.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1672970,
+                     "fileName":  "1672970.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1672970.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  12,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1683340,
+                     "fileName":  "1683340.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1683340.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1817070,
+                     "fileName":  "1817070.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1817070.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  15,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  1888930,
+                     "fileName":  "1888930.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\1888930.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2215200,
+                     "fileName":  "2215200.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2215200.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  6,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2300320,
+                     "fileName":  "2300320.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2300320.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  36,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2300840,
+                     "fileName":  "2300840.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2300840.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2358720,
+                     "fileName":  "2358720.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2358720.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  2,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2416450,
+                     "fileName":  "2416450.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2416450.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2440510,
+                     "fileName":  "2440510.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2440510.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  42,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2483190,
+                     "fileName":  "2483190.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2483190.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  18,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2531310,
+                     "fileName":  "2531310.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2531310.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2669410,
+                     "fileName":  "2669410.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2669410.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2677660,
+                     "fileName":  "2677660.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2677660.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  16,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  2868840,
+                     "fileName":  "2868840.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\2868840.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3017860,
+                     "fileName":  "3017860.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3017860.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  8,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3240220,
+                     "fileName":  "3240220.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3240220.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3321460,
+                     "fileName":  "3321460.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3321460.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  5,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3357650,
+                     "fileName":  "3357650.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3357650.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  3,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3405340,
+                     "fileName":  "3405340.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3405340.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  2,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3489700,
+                     "fileName":  "3489700.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3489700.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  8,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3756010,
+                     "fileName":  "3756010.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3756010.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  3768760,
+                     "fileName":  "3768760.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\3768760.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  22,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  4479970,
+                     "fileName":  "4479970.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\4479970.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 },
+                 {
+                     "appId":  4704690,
+                     "fileName":  "4704690.lua",
+                     "fullPath":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in\\4704690.lua",
+                     "scriptDirectory":  "C:\\Program Files (x86)\\Steam\\config\\stplug-in",
+                     "dlcCount":  1,
+                     "isDisabled":  false
+                 }
+             ],
+    "error":  ""
+}

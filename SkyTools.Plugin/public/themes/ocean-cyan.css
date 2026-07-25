@@ -1,0 +1,35 @@
+/*
+  SkyTools theme: Ocean Cyan.
+  Copy this file, rename it, and change the variables below to create a custom theme.
+*/
+
+:root,
+.skytools-theme-scope {
+  --skytools-bg: #101817;
+  --skytools-bg-elevated: rgba(17, 28, 28, 0.98);
+  --skytools-surface: rgba(185, 255, 245, 0.04);
+  --skytools-surface-strong: rgba(185, 255, 245, 0.07);
+  --skytools-surface-muted: rgba(0, 0, 0, 0.18);
+  --skytools-surface-deep: rgba(0, 0, 0, 0.32);
+  --skytools-text: #f5fffd;
+  --skytools-text-soft: #c9f4ed;
+  --skytools-muted: #8ac9c1;
+  --skytools-muted-strong: #a5d8d1;
+  --skytools-brand-muted: #95d5ce;
+  --skytools-accent: #22d3ee;
+  --skytools-accent-strong: #0e7490;
+  --skytools-accent-alt: #14b8a6;
+  --skytools-accent-rgb: 34, 211, 238;
+  --skytools-accent-strong-rgb: 14, 116, 144;
+  --skytools-accent-text: #b9fbff;
+  --skytools-button-start: #0f766e;
+  --skytools-button-end: #0891b2;
+  --skytools-button-remove-start: #155e75;
+  --skytools-button-remove-end: #0e7490;
+  --skytools-success: #4ade80;
+  --skytools-success-soft: #86efac;
+  --skytools-danger: #fb7185;
+  --skytools-danger-soft: #fda4af;
+  --skytools-danger-text: #fecdd3;
+  --skytools-warning: #facc15;
+}

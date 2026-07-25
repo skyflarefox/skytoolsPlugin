@@ -1,0 +1,35 @@
+/*
+  SkyTools theme: Pink Velvet.
+  Tema rosa vibrante e elegante com contraste otimizado.
+*/
+
+:root,
+.skytools-theme-scope {
+  --skytools-bg: #1a0a14;
+  --skytools-bg-elevated: rgba(36, 12, 28, 0.98);
+  --skytools-surface: rgba(255, 182, 217, 0.05);
+  --skytools-surface-strong: rgba(255, 182, 217, 0.09);
+  --skytools-surface-muted: rgba(0, 0, 0, 0.22);
+  --skytools-surface-deep: rgba(0, 0, 0, 0.40);
+  --skytools-text: #fff5f9;
+  --skytools-text-soft: #fce7f3;
+  --skytools-muted: #e895c0;
+  --skytools-muted-strong: #f4b8d7;
+  --skytools-brand-muted: #e382b6;
+  --skytools-accent: #f472b6;
+  --skytools-accent-strong: #db2777;
+  --skytools-accent-alt: #e879f9;
+  --skytools-accent-rgb: 244, 114, 182;
+  --skytools-accent-strong-rgb: 219, 39, 119;
+  --skytools-accent-text: #fdf2f8;
+  --skytools-button-start: #db2777;
+  --skytools-button-end: #f472b6;
+  --skytools-button-remove-start: #881337;
+  --skytools-button-remove-end: #be123c;
+  --skytools-success: #34d399;
+  --skytools-success-soft: #a7f3d0;
+  --skytools-danger: #f43f5e;
+  --skytools-danger-soft: #fb7185;
+  --skytools-danger-text: #ffe4e6;
+  --skytools-warning: #fbbf24;
+}
